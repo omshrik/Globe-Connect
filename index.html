@@ -796,6 +796,10 @@ function populateProfileUI(){
   const u=userProfile;
   document.getElementById('pname').textContent=u.displayName||'';
   document.getElementById('av-letter').textContent=(u.displayName||'?').charAt(0).toUpperCase();
+  // Load saved profile photo
+  const avImg=document.getElementById('av-img');
+  if(u.photoURL){avImg.src=u.photoURL;avImg.style.display='block';document.getElementById('av-letter').style.display='none';}
+  else{avImg.style.display='none';document.getElementById('av-letter').style.display='block';}
   document.getElementById('phandle').textContent='@'+(u.handle||'you')+' · Member since '+(u.createdAt?new Date(u.createdAt).getFullYear():'2025');
   document.getElementById('pbio').value=u.bio||'';
   document.getElementById('ploc').textContent=u.location||'—';
@@ -1244,9 +1248,32 @@ async function saveProfile(){
 }
 function handleAvatar(e){
   const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{const img=document.getElementById('av-img');img.src=ev.target.result;img.style.display='block';document.getElementById('av-letter').style.display='none';};
-  r.readAsDataURL(f);
+  // Resize to max 200x200 before saving to keep Firestore doc small
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img2=new Image();
+    img2.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const MAX=200;
+      let w=img2.width,h=img2.height;
+      if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img2,0,0,w,h);
+      const b64=canvas.toDataURL('image/jpeg',0.7);
+      // Show immediately
+      const avImg=document.getElementById('av-img');
+      avImg.src=b64;avImg.style.display='block';
+      document.getElementById('av-letter').style.display='none';
+      // Save to Firestore
+      userProfile.photoURL=b64;
+      if(window.currentUser){
+        window._fb.setDoc(window._fb.doc(window._fb.db,'users',window.currentUser.uid),{photoURL:b64},{merge:true});
+      }
+      showToast('📷 Profile photo saved!');
+    };
+    img2.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
 }
 
 // ── EDIT PERSON ──
