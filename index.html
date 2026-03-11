@@ -604,12 +604,36 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
 <div class="overlay" id="edit-modal" onclick="if(event.target===this)closeModal('edit-modal')">
   <div class="modal">
     <div class="modal-hdr"><div class="modal-title">✏️ Edit Profile</div><button class="modal-close" onclick="closeModal('edit-modal')">✕</button></div>
-    <div class="form-field"><label>Display Name</label><input type="text" id="ep-name" /></div>
-    <div class="form-field"><label>Username / Handle</label><input type="text" id="ep-handle" /></div>
-    <div class="form-field"><label>Bio</label><textarea id="ep-bio" rows="2"></textarea></div>
-    <div class="form-field"><label>Location (e.g. New York, USA)</label><input type="text" id="ep-loc" placeholder="e.g. New York, USA" /></div>
-    <div class="form-field"><label>Industry</label><select id="ep-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Real Estate</option><option>Marketing</option><option>Design</option><option>Law</option><option>Engineering</option><option>Media</option><option>Sports</option><option>Music</option><option>Art</option><option>Entrepreneurship</option><option>Government</option><option>Other</option></select></div>
+    <div class="form-field"><label>Display Name</label><input type="text" id="ep-name" placeholder="e.g. Om Shrikam" /></div>
+    <div class="form-field"><label>Username / Handle</label><input type="text" id="ep-handle" placeholder="e.g. omshrikam" /></div>
+    <div class="form-field"><label>Bio</label><textarea id="ep-bio" rows="2" placeholder="What you're about..."></textarea></div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-field" style="flex:1"><label>City</label><input type="text" id="ep-city" placeholder="e.g. New York" /></div>
+      <div class="form-field" style="flex:1"><label>Country</label><input type="text" id="ep-country" placeholder="e.g. USA" /></div>
+    </div>
+    <div class="form-field"><label>Industry</label>
+      <select id="ep-industry" onchange="updateProfileSubIndustry()">
+        <option value="">— Select —</option>
+        <option>Technology</option><option>Finance</option><option>Real Estate</option>
+        <option>Healthcare</option><option>Education</option><option>Marketing</option>
+        <option>Design</option><option>Law</option><option>Engineering</option>
+        <option>Media</option><option>Sports</option><option>Music</option>
+        <option>Art</option><option>Entrepreneurship</option><option>Government</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-field" id="ep-subindustry-wrap" style="display:none"><label>Sub-Industry</label>
+      <select id="ep-subindustry"><option value="">— Select —</option></select>
+    </div>
     <div class="form-field"><label>School / University</label><input type="text" id="ep-school" placeholder="e.g. NYU, Harvard..." /></div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-field" style="flex:1"><label>🎂 Birthday (MM/DD)</label><input type="text" id="ep-birthday" placeholder="MM/DD" style="text-align:center;" /></div>
+      <div class="form-field" style="flex:1"><label>🎈 Age</label><input type="text" id="ep-age" placeholder="e.g. 21" style="text-align:center;" /></div>
+    </div>
+    <div class="form-field"><label>📧 Email</label><input type="text" id="ep-email" placeholder="your@email.com" /></div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-field" style="flex:1"><label>📱 Phone</label><input type="text" id="ep-phone" placeholder="+1 234 567 8900" /></div>
+      <div class="form-field" style="flex:1"><label>📸 Instagram</label><input type="text" id="ep-instagram" placeholder="@handle" /></div>
+    </div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-top:4px;" onclick="saveProfile()">Save Changes ✓</button>
   </div>
 </div>
@@ -777,8 +801,22 @@ function populateProfileUI(){
   document.getElementById('ploc').textContent=u.location||'—';
   document.getElementById('pschool').textContent=u.school||'—';
   const indEl=document.getElementById('pindustry');
-  if(u.industry){indEl.textContent=u.industry;indEl.parentElement.style.display='flex';}
+  const indLabel = [u.industry, u.subIndustry].filter(Boolean).join(' · ');
+  if(indLabel){indEl.textContent=indLabel;indEl.parentElement.style.display='flex';}
   else{indEl.parentElement.style.display='none';}
+  // Update extra meta items
+  let extraMeta = document.getElementById('pmeta-extra');
+  if(!extraMeta){
+    extraMeta=document.createElement('div');
+    extraMeta.id='pmeta-extra';
+    extraMeta.style.cssText='display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;';
+    document.querySelector('.pmeta').after(extraMeta);
+  }
+  extraMeta.innerHTML='';
+  if(u.birthday) extraMeta.innerHTML+=`<div class="pmeta-item">🎂 <strong>${u.birthday}${u.age?' · Age '+u.age:''}</strong></div>`;
+  if(u.email) extraMeta.innerHTML+=`<div class="pmeta-item">📧 <strong>${u.email}</strong></div>`;
+  if(u.phone) extraMeta.innerHTML+=`<div class="pmeta-item">📱 <strong>${u.phone}</strong></div>`;
+  if(u.instagram) extraMeta.innerHTML+=`<div class="pmeta-item">📸 <strong>@${u.instagram}</strong></div>`;
 }
 
 // ── MAP ──
@@ -1124,23 +1162,75 @@ async function delSeg(id){
 }
 
 // ── PROFILE ──
+const SUB_INDUSTRIES = {
+  'Technology': ['SaaS','AI/ML','Cybersecurity','Fintech','Healthtech','E-commerce','Gaming','Hardware','Web3/Crypto','Developer Tools'],
+  'Finance': ['Investment Banking','Venture Capital','Private Equity','Hedge Funds','Accounting','Insurance','Wealth Management','Trading'],
+  'Real Estate': ['Residential','Commercial','Hospitality','Industrial','Property Management','Development','REITs','Brokerage'],
+  'Healthcare': ['Medicine','Biotech','Pharma','Mental Health','Dentistry','Medical Devices','Hospital Admin','Nursing'],
+  'Education': ['K-12','Higher Ed','EdTech','Tutoring','Corporate Training','Curriculum Design','Administration'],
+  'Marketing': ['Digital Marketing','Brand Strategy','PR','Growth','Content','SEO/SEM','Influencer','Advertising'],
+  'Design': ['Product Design','UX/UI','Graphic Design','Architecture','Interior Design','Fashion Design','Industrial Design'],
+  'Law': ['Corporate Law','Criminal Law','IP Law','Real Estate Law','Family Law','Immigration','Litigation'],
+  'Engineering': ['Software','Mechanical','Civil','Electrical','Chemical','Aerospace','Biomedical'],
+  'Media': ['Journalism','Film','TV','Podcasting','Publishing','Photography','Radio'],
+  'Sports': ['Professional Athlete','Coaching','Sports Management','Sports Media','Fitness','Sports Tech'],
+  'Music': ['Artist','Producer','Management','Publishing','Live Events','Music Tech'],
+  'Art': ['Fine Art','NFTs','Galleries','Illustration','Animation','Photography'],
+  'Entrepreneurship': ['Founder/CEO','Angel Investor','Startup Studio','Business Dev','Consulting'],
+  'Government': ['Federal','State/Local','Policy','Military','Nonprofit','International Relations'],
+  'Other': ['Freelance','Student','Research','Academia','Non-profit','Other']
+};
+
+function updateProfileSubIndustry() {
+  const ind = document.getElementById('ep-industry').value;
+  const wrap = document.getElementById('ep-subindustry-wrap');
+  const sel = document.getElementById('ep-subindustry');
+  const subs = SUB_INDUSTRIES[ind] || [];
+  if (subs.length) {
+    wrap.style.display = 'block';
+    sel.innerHTML = '<option value="">— Select —</option>' + subs.map(s=>`<option>${s}</option>`).join('');
+    if (userProfile.subIndustry) sel.value = userProfile.subIndustry;
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
 function openEditModal(){
   document.getElementById('ep-name').value=userProfile.displayName||'';
   document.getElementById('ep-handle').value=userProfile.handle||'';
   document.getElementById('ep-bio').value=userProfile.bio||'';
-  document.getElementById('ep-loc').value=userProfile.location||'';
+  // Split location into city/country
+  const loc = userProfile.location||'';
+  const locParts = loc.split(',');
+  document.getElementById('ep-city').value = locParts[0]?.trim()||'';
+  document.getElementById('ep-country').value = locParts.slice(1).join(',').trim()||'';
   document.getElementById('ep-school').value=userProfile.school||'';
   document.getElementById('ep-industry').value=userProfile.industry||'';
+  document.getElementById('ep-birthday').value=userProfile.birthday||'';
+  document.getElementById('ep-age').value=userProfile.age||'';
+  document.getElementById('ep-email').value=userProfile.email||'';
+  document.getElementById('ep-phone').value=userProfile.phone||'';
+  document.getElementById('ep-instagram').value=userProfile.instagram||'';
+  updateProfileSubIndustry();
+  if(userProfile.subIndustry) document.getElementById('ep-subindustry').value=userProfile.subIndustry||'';
   document.getElementById('edit-modal').classList.add('open');
 }
 async function saveProfile(){
   const name=document.getElementById('ep-name').value.trim();
   const handle=document.getElementById('ep-handle').value.trim().replace('@','');
   const bio=document.getElementById('ep-bio').value.trim();
-  const location=document.getElementById('ep-loc').value.trim();
+  const city=document.getElementById('ep-city').value.trim();
+  const country=document.getElementById('ep-country').value.trim();
+  const location=[city,country].filter(Boolean).join(', ');
   const school=document.getElementById('ep-school').value.trim();
   const industry=document.getElementById('ep-industry').value.trim();
-  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:handle||userProfile.handle,bio,location,school,industry};
+  const subIndustry=document.getElementById('ep-subindustry')?.value.trim()||'';
+  const birthday=document.getElementById('ep-birthday').value.trim();
+  const age=document.getElementById('ep-age').value.trim();
+  const email=document.getElementById('ep-email').value.trim();
+  const phone=document.getElementById('ep-phone').value.trim();
+  const instagram=document.getElementById('ep-instagram').value.trim().replace('@','');
+  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:handle||userProfile.handle,bio,location,school,industry,subIndustry,birthday,age,email,phone,instagram};
   await window._fb.setDoc(window._fb.doc(window._fb.db,'users',window.currentUser.uid),userProfile,{merge:true});
   populateProfileUI();
   const initials=(userProfile.displayName||'?').charAt(0).toUpperCase();
@@ -1344,7 +1434,7 @@ function shareProfile(){
   if(u.displayName) params.set('name', u.displayName);
   if(city) params.set('city', city);
   if(country) params.set('country', country);
-  if(u.industry) params.set('industry', u.industry);
+  if(u.industry) params.set('industry', [u.industry, u.subIndustry].filter(Boolean).join(' · '));
   if(u.bio) params.set('bio', u.bio);
   if(u.school) params.set('school', u.school);
   const url = `${base}?${params.toString()}`;
