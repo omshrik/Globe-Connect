@@ -99,7 +99,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .reminder-nav button{background:rgba(255,255,255,.12);border:none;border-radius:5px;color:inherit;font-size:11px;padding:2px 6px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .reminder-nav button:hover{background:rgba(255,255,255,.22);}
 .reminder-count{font-size:11px;opacity:.6;}
-.tab{background:transparent;border:1px solid transparent;color:var(--muted);border-radius:8px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.tab{background:transparent;border:1px solid transparent;color:var(--muted);border-radius:8px;padding:6px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .tab.active{background:rgba(99,102,241,.17);border-color:rgba(99,102,241,.38);color:#A5B4FC}
 .content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 .panel{flex:1;display:none;flex-direction:column;overflow:hidden;min-height:0}
@@ -186,8 +186,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .seg-bar-track{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
 .seg-bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.34,1.56,.64,1)}
 .seg-bar-cnt{font-size:14px;color:var(--muted);width:24px;text-align:right;flex-shrink:0}
-.country-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
-.country-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:6px 13px;font-size:14px;color:#94A3B8}
+.country-chips{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.continent-group{margin-bottom:4px}
+.continent-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;opacity:.7}
+.continent-row{display:flex;flex-wrap:wrap;gap:7px}
+.country-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:8px 13px;font-size:13px;color:#E2E8F0;transition:all .2s;cursor:default;position:relative;overflow:hidden}
+.country-chip:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.country-flag{font-size:22px;line-height:1}
+.country-name{font-weight:600;font-size:13px}
+.country-cnt{font-size:11px;font-weight:700;border-radius:99px;padding:2px 7px;margin-left:2px}
 .milestone-list{position:relative}
 .milestone-list::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,rgba(99,102,241,.5),transparent)}
 .milestone-item{display:flex;align-items:flex-start;gap:12px;padding:9px 0}
@@ -278,8 +285,8 @@ select option{background:#0C1220;color:#E2E8F0}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#1E293B;border:1px solid rgba(99,102,241,.4);color:var(--text);padding:9px 18px;border-radius:11px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);backdrop-filter:blur(20px);flex-shrink:0}
-.nav-btn{flex:1;background:none;border:none;color:#475569;font-size:10.5px;font-weight:600;cursor:pointer;padding:9px 0 13px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'DM Sans',sans-serif;transition:color .15s}
-.nav-btn .ni{font-size:21px}
+.nav-btn{flex:1;background:none;border:none;color:#475569;font-size:12px;font-weight:600;cursor:pointer;padding:9px 0 13px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'DM Sans',sans-serif;transition:color .15s}
+.nav-btn .ni{font-size:26px}
 .nav-btn.active{color:#A5B4FC}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp .4s ease both}
@@ -613,7 +620,10 @@ const DEFAULT_SEGMENTS=[
   {id:'work',label:'Work',color:'#A29BFE',emoji:'💼'},
 ];
 const COUNTRY_GEO={'USA':{lat:39,lng:-98},'United States':{lat:39,lng:-98},'Germany':{lat:51,lng:10},'France':{lat:47,lng:2},'Japan':{lat:36,lng:138},'India':{lat:22,lng:79},'Brazil':{lat:-15,lng:-47},'UK':{lat:54,lng:-2},'United Kingdom':{lat:54,lng:-2},'Italy':{lat:42,lng:12},'Canada':{lat:56,lng:-106},'Australia':{lat:-27,lng:133},'China':{lat:35,lng:104},'Spain':{lat:40,lng:-4},'Mexico':{lat:24,lng:-102},'Argentina':{lat:-35,lng:-65},'UAE':{lat:25,lng:55},'Nigeria':{lat:9,lng:8},'Ghana':{lat:8,lng:-1},'South Africa':{lat:-29,lng:25},'Kenya':{lat:1,lng:38},'Egypt':{lat:27,lng:30},'Turkey':{lat:39,lng:35},'Russia':{lat:61,lng:105},'South Korea':{lat:37,lng:127.5},'Indonesia':{lat:-5,lng:120},'Sweden':{lat:62,lng:16},'Norway':{lat:65,lng:14},'Netherlands':{lat:52,lng:5},'Poland':{lat:52,lng:20},'Portugal':{lat:39,lng:-8},'Greece':{lat:39,lng:22},'Pakistan':{lat:31,lng:74},'Thailand':{lat:15,lng:101},'Vietnam':{lat:14,lng:108},'Philippines':{lat:13,lng:122},'Colombia':{lat:4,lng:-72},'Morocco':{lat:32,lng:-6},'Singapore':{lat:1.35,lng:103.82},'Malaysia':{lat:4,lng:109},'New Zealand':{lat:-42,lng:174}};
-const FLAGS={'Germany':'🇩🇪','Argentina':'🇦🇷','India':'🇮🇳','Ghana':'🇬🇭','Japan':'🇯🇵','Italy':'🇮🇹','UAE':'🇦🇪','France':'🇫🇷','USA':'🇺🇸','UK':'🇬🇧','Brazil':'🇧🇷','Canada':'🇨🇦','Australia':'🇦🇺','China':'🇨🇳','Spain':'🇪🇸','Mexico':'🇲🇽','South Korea':'🇰🇷','Nigeria':'🇳🇬','South Africa':'🇿🇦','Kenya':'🇰🇪','Egypt':'🇪🇬','Turkey':'🇹🇷','Russia':'🇷🇺','Netherlands':'🇳🇱','Sweden':'🇸🇪','Norway':'🇳🇴','Poland':'🇵🇱','Greece':'🇬🇷','Portugal':'🇵🇹','United States':'🇺🇸','United Kingdom':'🇬🇧','Singapore':'🇸🇬','New Zealand':'🇳🇿'};
+const FLAGS={'Germany':'🇩🇪','Argentina':'🇦🇷','India':'🇮🇳','Ghana':'🇬🇭','Japan':'🇯🇵','Italy':'🇮🇹','UAE':'🇦🇪','France':'🇫🇷','USA':'🇺🇸','UK':'🇬🇧','Brazil':'🇧🇷','Canada':'🇨🇦','Australia':'🇦🇺','China':'🇨🇳','Spain':'🇪🇸','Mexico':'🇲🇽','South Korea':'🇰🇷','Nigeria':'🇳🇬','South Africa':'🇿🇦','Kenya':'🇰🇪','Egypt':'🇪🇬','Turkey':'🇹🇷','Russia':'🇷🇺','Netherlands':'🇳🇱','Sweden':'🇸🇪','Norway':'🇳🇴','Poland':'🇵🇱','Greece':'🇬🇷','Portugal':'🇵🇹','United States':'🇺🇸','United Kingdom':'🇬🇧','Singapore':'🇸🇬','New Zealand':'🇳🇿','Pakistan':'🇵🇰','Thailand':'🇹🇭','Vietnam':'🇻🇳','Philippines':'🇵🇭','Colombia':'🇨🇴','Morocco':'🇲🇦','Malaysia':'🇲🇾','Indonesia':'🇮🇩','Switzerland':'🇨🇭','Saudi Arabia':'🇸🇦','Qatar':'🇶🇦','Israel':'🇮🇱','Chile':'🇨🇱','Peru':'🇵🇪','Jamaica':'🇯🇲'};
+const CONTINENTS={'North America':['USA','United States','Canada','Mexico','Cuba','Jamaica','Trinidad'],'South America':['Brazil','Argentina','Colombia','Chile','Peru','Venezuela','Ecuador','Bolivia','Paraguay','Uruguay'],'Europe':['Germany','France','Italy','Spain','UK','United Kingdom','Netherlands','Sweden','Norway','Poland','Greece','Portugal','Switzerland','Austria','Belgium','Denmark','Finland','Ireland','Czech Republic','Hungary','Romania','Ukraine','Russia','Turkey'],'Asia':['India','China','Japan','South Korea','Singapore','Malaysia','Indonesia','Thailand','Vietnam','Philippines','Pakistan','Bangladesh','Sri Lanka','Nepal','UAE','Saudi Arabia','Qatar','Kuwait','Jordan','Lebanon','Israel'],'Africa':['Nigeria','Ghana','South Africa','Kenya','Egypt','Ethiopia','Tanzania','Uganda','Rwanda','Senegal','Morocco'],'Oceania':['Australia','New Zealand']};
+const CONTINENT_COLORS={'North America':'#6366F1','South America':'#00C9A7','Europe':'#F5C842','Asia':'#FF6B6B','Africa':'#FD79A8','Oceania':'#74B9FF'};
+const CONTINENT_ICONS={'North America':'🌎','South America':'🌎','Europe':'🌍','Asia':'🌏','Africa':'🌍','Oceania':'🌏'};
 const AV_COLORS=['#FF6B6B','#FFD700','#00C9A7','#A29BFE','#FD79A8','#6C5CE7','#FDCB6E','#00B894','#E17055'];
 const EMOJIS=['⭐','🏋️','🎮','🎵','💡','🔬','🎨','🏄','🍕','🌱','💰','🎭','🏥','⚽','🎤','🎻','🧗','🎯','🤿','🥊'];
 const COLORS=['#FF6B6B','#FFD700','#00C9A7','#A29BFE','#FD79A8','#6C5CE7','#FDCB6E','#00B894','#E17055','#74B9FF','#55EFC4','#FFEAA7','#FF7675','#0984E3','#00CEC9','#E84393','#6AB04C','#F9CA24','#EE5A24','#9980FA'];
@@ -849,6 +859,15 @@ function renderPeople(){
   }).join(''):`<div style="text-align:center;color:#475569;padding:40px 0;font-size:14px;">${connections.length===0?'No connections yet — tap + Add to pin your first person!':'No results found.'}</div>`;
 }
 
+function filterByCountry(country) {
+  const c = connections.find(x => x.country === country);
+  if (!c) return;
+  switchTab('map');
+  setTimeout(() => {
+    map.flyTo({center:[c.lng, c.lat], zoom:4, duration:1200, essential:true});
+  }, 60);
+}
+
 function flyTo(id){
   const c=connections.find(x=>x.id===id);if(!c)return;
   switchTab('map');
@@ -905,8 +924,43 @@ function renderProfileData(){
     const cnt=connections.filter(c=>c.segment===seg.id).length;const p=total?(cnt/total)*100:0;
     return `<div class="seg-bar-row"><div class="seg-bar-label" style="color:${seg.color}">${seg.emoji} ${seg.label}</div><div class="seg-bar-track"><div class="seg-bar-fill" style="background:${seg.color};width:${p}%"></div></div><div class="seg-bar-cnt">${cnt}</div></div>`;
   }).join('');
+  // Countries — grouped by continent
   document.getElementById('ctry-count').textContent=`(${ctries.length})`;
-  document.getElementById('ctry-chips').innerHTML=ctries.map(c=>`<div class="country-chip">${FLAGS[c]||'🌍'} ${c}</div>`).join('');
+  // Count people per country
+  const ctryCounts = {};
+  connections.forEach(c => { ctryCounts[c.country] = (ctryCounts[c.country]||0)+1; });
+  // Group by continent
+  const grouped = {};
+  ctries.forEach(country => {
+    let found = 'Other';
+    for (const [cont, countries] of Object.entries(CONTINENTS)) {
+      if (countries.includes(country)) { found = cont; break; }
+    }
+    if (!grouped[found]) grouped[found] = [];
+    grouped[found].push(country);
+  });
+  const continentOrder = ['North America','South America','Europe','Asia','Africa','Oceania','Other'];
+  let chipsHTML = '';
+  continentOrder.forEach(cont => {
+    if (!grouped[cont]) return;
+    const color = CONTINENT_COLORS[cont] || '#94A3B8';
+    const icon = CONTINENT_ICONS[cont] || '🌐';
+    chipsHTML += `<div class="continent-group">
+      <div class="continent-label" style="color:${color}">${icon} ${cont}</div>
+      <div class="continent-row">
+        ${grouped[cont].map(country => {
+          const cnt = ctryCounts[country] || 0;
+          const flag = FLAGS[country] || '🌍';
+          return `<div class="country-chip" style="border-color:${color}30" onclick="filterByCountry('${country}')">
+            <span class="country-flag">${flag}</span>
+            <span class="country-name">${country}</span>
+            <span class="country-cnt" style="background:${color}22;color:${color}">${cnt} ${cnt===1?'person':'people'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('ctry-chips').innerHTML = chipsHTML;
   const milestones=[
     {icon:'🌱',title:'First Connection',desc:`${connections.length}/1 connections`,earned:connections.length>=1},
     {icon:'🤝',title:'Networker',desc:`${connections.length}/10 connections`,earned:connections.length>=10},
