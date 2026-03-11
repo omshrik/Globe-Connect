@@ -156,32 +156,32 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .p-stat{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px;text-align:center;position:relative;overflow:hidden}
 .p-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--line)}
 .p-stat-num{font-family:'Syne',sans-serif;font-size:26px;font-weight:900;color:#A5B4FC}
-.p-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
-.sec-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;margin-bottom:11px;display:flex;align-items:center;gap:7px}
+.p-stat-lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.sec-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .sec-title small{color:var(--muted);font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif}
 .level-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px}
 .level-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.level-title{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:800}
+.level-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800}
 .level-lbl{font-size:12px;color:var(--gold);font-weight:700}
-.level-track{height:9px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.level-track{height:12px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
 .level-fill{height:100%;background:linear-gradient(90deg,#6366F1,#00C9A7);border-radius:99px;transition:width 1.5s cubic-bezier(.34,1.56,.64,1);width:0}
-.level-sub{display:flex;justify-content:space-between;margin-top:5px;font-size:11.5px;color:var(--muted)}
+.level-sub{display:flex;justify-content:space-between;margin-top:6px;font-size:13px;color:var(--muted)}
 .seg-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
-.seg-bar-label{width:90px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;flex-shrink:0}
-.seg-bar-track{flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.seg-bar-label{width:110px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;flex-shrink:0}
+.seg-bar-track{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
 .seg-bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.34,1.56,.64,1)}
-.seg-bar-cnt{font-size:11.5px;color:var(--muted);width:20px;text-align:right;flex-shrink:0}
+.seg-bar-cnt{font-size:14px;color:var(--muted);width:24px;text-align:right;flex-shrink:0}
 .country-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
-.country-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:12px;color:#94A3B8}
+.country-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:6px 13px;font-size:14px;color:#94A3B8}
 .milestone-list{position:relative}
 .milestone-list::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,rgba(99,102,241,.5),transparent)}
 .milestone-item{display:flex;align-items:flex-start;gap:12px;padding:9px 0}
-.m-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;z-index:1;border:2px solid}
+.m-dot{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:1;border:2px solid}
 .m-dot.earned{background:rgba(99,102,241,.25);border-color:#6366F1}
 .m-dot.locked{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);opacity:.4}
 .m-body{padding-top:3px}
-.m-title{font-weight:600;font-size:13px}
-.m-desc{font-size:11.5px;color:var(--muted);margin-top:2px}
+.m-title{font-weight:700;font-size:15px}
+.m-desc{font-size:13px;color:var(--muted);margin-top:3px}
 .share-card{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(0,201,167,.1));border:1px solid rgba(99,102,241,.22);border-radius:var(--r);padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:20px}
 .share-info{flex:1}
 .share-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800}
@@ -474,14 +474,24 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     <div class="modal-hdr"><div class="modal-title">📍 Add a Connection</div><button class="modal-close" onclick="closeModal('add-modal')">✕</button></div>
     <div class="form-field"><label>Full Name *</label><input type="text" id="ap-name" placeholder="e.g. Sofia Rossi" /></div>
     <div class="form-field"><label>City *</label><input type="text" id="ap-city" placeholder="e.g. Milan" /></div>
-    <div class="form-field"><label>Country</label><input type="text" id="ap-country" placeholder="e.g. Italy" /></div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-field" style="flex:1"><label>State / Region</label><input type="text" id="ap-state" placeholder="e.g. Lombardy" /></div>
+      <div class="form-field" style="flex:1"><label>Country</label><input type="text" id="ap-country" placeholder="e.g. Italy" /></div>
+    </div>
     <div class="form-field"><label>Segment</label><div class="seg-pills" id="ap-pills"></div></div>
     <div style="display:flex;gap:10px;">
       <div class="form-field" style="flex:1"><label>Industry</label><select id="ap-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
-      <div class="form-field" style="flex:0 0 90px"><label>Age</label><input type="text" id="ap-age" placeholder="e.g. 22" style="text-align:center;" /></div>
+      <div class="form-field" style="flex:0 0 110px"><label>🎂 Birthday</label><input type="text" id="ap-age" placeholder="MM/DD" style="text-align:center;" /></div>
     </div>
     <div class="form-field"><label>Note (how you met)</label><textarea id="ap-note" rows="2" placeholder="Met at orientation, conference..."></textarea></div>
     <div class="form-field"><label>Tags (comma-separated)</label><input type="text" id="ap-tags" placeholder="Tech, Soccer, Music" /></div>
+    <!-- Contact info toggle -->
+    <button type="button" onclick="toggleContactFields('ap')" id="ap-contact-toggle" style="width:100%;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);border-radius:9px;padding:9px;color:#64748B;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;transition:all .15s;">+ Add Contact Info (email, phone, Instagram)</button>
+    <div id="ap-contact-fields" style="display:none;">
+      <div class="form-field"><label>📧 Email</label><input type="text" id="ap-email" placeholder="their@email.com" /></div>
+      <div class="form-field"><label>📱 Phone</label><input type="text" id="ap-phone" placeholder="+1 234 567 8900" /></div>
+      <div class="form-field"><label>📸 Instagram</label><input type="text" id="ap-instagram" placeholder="@username" /></div>
+    </div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px;" onclick="addPerson()">Pin This Person 📍</button>
   </div>
 </div>
@@ -492,14 +502,23 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     <div class="modal-hdr"><div class="modal-title">✏️ Edit Connection</div><button class="modal-close" onclick="closeModal('epp-modal')">✕</button></div>
     <div class="form-field"><label>Full Name *</label><input type="text" id="epp-name" /></div>
     <div class="form-field"><label>City</label><input type="text" id="epp-city" /></div>
-    <div class="form-field"><label>Country</label><input type="text" id="epp-country" /></div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-field" style="flex:1"><label>State / Region</label><input type="text" id="epp-state" placeholder="e.g. New Jersey" /></div>
+      <div class="form-field" style="flex:1"><label>Country</label><input type="text" id="epp-country" /></div>
+    </div>
     <div class="form-field"><label>Move to Segment</label><div class="seg-pills" id="epp-pills"></div></div>
     <div style="display:flex;gap:10px;">
       <div class="form-field" style="flex:1"><label>Industry</label><select id="epp-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
-      <div class="form-field" style="flex:0 0 90px"><label>Age</label><input type="text" id="epp-age" placeholder="e.g. 22" style="text-align:center;" /></div>
+      <div class="form-field" style="flex:0 0 110px"><label>🎂 Birthday</label><input type="text" id="epp-age" placeholder="MM/DD" style="text-align:center;" /></div>
     </div>
     <div class="form-field"><label>Note</label><textarea id="epp-note" rows="3"></textarea></div>
     <div class="form-field"><label>Tags (comma-separated)</label><input type="text" id="epp-tags" /></div>
+    <button type="button" onclick="toggleContactFields('epp')" id="epp-contact-toggle" style="width:100%;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);border-radius:9px;padding:9px;color:#64748B;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;transition:all .15s;">+ Contact Info (email, phone, Instagram)</button>
+    <div id="epp-contact-fields" style="display:none;">
+      <div class="form-field"><label>📧 Email</label><input type="text" id="epp-email" placeholder="their@email.com" /></div>
+      <div class="form-field"><label>📱 Phone</label><input type="text" id="epp-phone" placeholder="+1 234 567 8900" /></div>
+      <div class="form-field"><label>📸 Instagram</label><input type="text" id="epp-instagram" placeholder="@username" /></div>
+    </div>
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button class="btn" style="flex:1;justify-content:center;padding:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#EF4444;font-size:13px;" onclick="deletePerson()">🗑 Delete</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center;padding:12px;font-size:14px;" onclick="savePersonEdit()">Save Changes ✓</button>
@@ -704,6 +723,14 @@ function initMap(){
   map.on('load',()=>{
     map.setFog({color:'rgb(7,9,15)','high-color':'rgb(15,25,55)','horizon-blend':.02,'space-color':'rgb(3,5,12)','star-intensity':.7});
     renderMarkers();renderSegBar();renderPeople();renderBadges();
+    // Fly to user's real location
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(function(pos){
+        map.flyTo({center:[pos.coords.longitude,pos.coords.latitude],zoom:4,duration:2000,essential:true});
+      }, function(){
+        // permission denied or unavailable - stay at default
+      });
+    }
   });
   map.addControl(new mapboxgl.NavigationControl({showCompass:false}),'bottom-right');
 }
@@ -745,6 +772,11 @@ function showPopup(c,el){
         ${c.age?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,200,66,.12);color:#F5C842;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">🎂 ${c.age}</span>`:''}
       </div>
       ${tags?`<div class="popup-tags">${tags}</div>`:''}
+      ${(c.email||c.phone||c.instagram)?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:5px;">
+        ${c.email?`<a href="mailto:${c.email}" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8;text-decoration:none;">📧 <span>${c.email}</span></a>`:''}
+        ${c.phone?`<a href="tel:${c.phone}" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8;text-decoration:none;">📱 <span>${c.phone}</span></a>`:''}
+        ${c.instagram?`<a href="https://instagram.com/${c.instagram}" target="_blank" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8;text-decoration:none;">📸 <span>@${c.instagram}</span></a>`:''}
+      </div>`:''}
       <button onclick="openEditPerson('${c.id}')" style="margin-top:10px;width:100%;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#A5B4FC;border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">✏️ Edit Connection</button>
     </div>`)
     .addTo(map);
@@ -778,7 +810,7 @@ function renderPeople(){
     const seg=getSeg(c.segment);const ac=AV_COLORS[i%AV_COLORS.length];
     return `<div class="person-card">
       <div class="p-avatar" style="background:${ac}20;border:2px solid ${ac}55;color:${ac};cursor:pointer;" onclick="flyTo('${c.id}')">${c.name.charAt(0)}</div>
-      <div style="flex:1;cursor:pointer;" onclick="flyTo('${c.id}')"><div class="p-name">${c.name}</div><div class="p-loc">📍 ${c.city}, ${c.country}${c.industry?' · '+c.industry:''}${c.age?' · Age '+c.age:''}</div></div>
+      <div style="flex:1;cursor:pointer;" onclick="flyTo('${c.id}')"><div class="p-name">${c.name}</div><div class="p-loc">📍 ${c.city}${c.state?', '+c.state:''}, ${c.country}${c.industry?' · '+c.industry:''}${c.age?' · 🎂 '+c.age:''}</div></div>
       <span class="seg-badge" style="background:${seg.color}1a;color:${seg.color}">${seg.emoji} ${seg.label}</span>
       <button class="card-act edit-btn" onclick="openEditPerson('${c.id}')" title="Edit">✏️</button>
     </div>`;
@@ -863,8 +895,8 @@ function pickAddSeg(id,el){
   const seg=getSeg(id);el.style.background=`${seg.color}22`;el.style.borderColor=`${seg.color}55`;el.style.color=seg.color;
 }
 
-async function geocodePlace(city,country){
-  const query=encodeURIComponent([city,country].filter(Boolean).join(', '));
+async function geocodePlace(city,state,country){
+  const query=encodeURIComponent([city,state,country].filter(Boolean).join(', '));
   try{
     const res=await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${MAPBOX_TOKEN}&limit=1&types=place,locality,neighborhood,address`);
     const data=await res.json();
@@ -878,23 +910,30 @@ async function geocodePlace(city,country){
 async function addPerson(){
   const name=document.getElementById('ap-name').value.trim();
   const city=document.getElementById('ap-city').value.trim();
+  const state=document.getElementById('ap-state').value.trim();
   const country=document.getElementById('ap-country').value.trim();
   const note=document.getElementById('ap-note').value.trim();
   const tags=document.getElementById('ap-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const industry=document.getElementById('ap-industry').value;
   const age=document.getElementById('ap-age').value.trim();
+  const email=document.getElementById('ap-email').value.trim();
+  const phone=document.getElementById('ap-phone').value.trim();
+  const instagram=document.getElementById('ap-instagram').value.trim().replace(/^@/,'');
   if(!name||!city){showToast('⚠️ Name and city are required!');return;}
   showToast('📍 Finding location...');
-  const geo=await geocodePlace(city,country);
-  const cData={id:Date.now().toString(),name,city,country:country||'Unknown',lat:geo.lat,lng:geo.lng,segment:selSeg,note,tags,industry,age,added:new Date().toISOString()};
+  const geo=await geocodePlace(city,state,country);
+  const cData={id:Date.now().toString(),name,city,state,country:country||'Unknown',lat:geo.lat,lng:geo.lng,segment:selSeg,note,tags,industry,age,email,phone,instagram,added:new Date().toISOString()};
   const {db,collection,addDoc}=window._fb;
   try{
     const ref=await addDoc(collection(db,'users',window.currentUser.uid,'connections'),cData);
     cData.firestoreId=ref.id;
   }catch(e){showToast('⚠️ Save failed. Check internet.');console.error(e);return;}
   connections.push(cData);
-  ['ap-name','ap-city','ap-country','ap-note','ap-tags','ap-age'].forEach(id=>document.getElementById(id).value='');
+  ['ap-name','ap-city','ap-state','ap-country','ap-note','ap-tags','ap-age','ap-email','ap-phone','ap-instagram'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ap-industry').value='';
+  document.getElementById('ap-contact-fields').style.display='none';
+  document.getElementById('ap-contact-toggle').textContent='+ Add Contact Info (email, phone, Instagram)';
+  document.getElementById('ap-contact-toggle').style.color='#64748B';
   closeModal('add-modal');
   renderSegBar();renderMarkers();renderPeople();renderBadges();
   if(profileInited)renderProfileData();
@@ -1012,11 +1051,26 @@ function openEditPerson(id){
   editPersonId=c.id;eppSeg=c.segment;
   document.getElementById('epp-name').value=c.name;
   document.getElementById('epp-city').value=c.city;
+  document.getElementById('epp-state').value=c.state||'';
   document.getElementById('epp-country').value=c.country;
   document.getElementById('epp-note').value=c.note||'';
   document.getElementById('epp-tags').value=(c.tags||[]).join(', ');
   document.getElementById('epp-industry').value=c.industry||'';
   document.getElementById('epp-age').value=c.age||'';
+  document.getElementById('epp-email').value=c.email||'';
+  document.getElementById('epp-phone').value=c.phone||'';
+  document.getElementById('epp-instagram').value=c.instagram?('@'+c.instagram):'';
+  // Auto-expand contact fields if any are filled
+  if(c.email||c.phone||c.instagram){
+    document.getElementById('epp-contact-fields').style.display='block';
+    document.getElementById('epp-contact-toggle').textContent='− Hide Contact Info';
+    document.getElementById('epp-contact-toggle').style.color='#A5B4FC';
+    document.getElementById('epp-contact-toggle').style.borderColor='rgba(99,102,241,.4)';
+  } else {
+    document.getElementById('epp-contact-fields').style.display='none';
+    document.getElementById('epp-contact-toggle').textContent='+ Contact Info (email, phone, Instagram)';
+    document.getElementById('epp-contact-toggle').style.color='#64748B';
+  }
   document.getElementById('epp-pills').innerHTML=segments.map(s=>`<button class="seg-pill" onclick="pickEppSeg('${s.id}',this)" style="${eppSeg===s.id?`background:${s.color}22;border-color:${s.color}55;color:${s.color};`:''}"> ${s.emoji} ${s.label}</button>`).join('');
   document.getElementById('epp-modal').classList.add('open');
   if(activePopup){activePopup.remove();activePopup=null;}
@@ -1030,17 +1084,21 @@ async function savePersonEdit(){
   const c=connections.find(x=>x.id===editPersonId);if(!c)return;
   const name=document.getElementById('epp-name').value.trim();
   const city=document.getElementById('epp-city').value.trim();
+  const state=document.getElementById('epp-state').value.trim();
   const country=document.getElementById('epp-country').value.trim();
   const note=document.getElementById('epp-note').value.trim();
   const tags=document.getElementById('epp-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const industry=document.getElementById('epp-industry').value;
   const age=document.getElementById('epp-age').value.trim();
+  const email=document.getElementById('epp-email').value.trim();
+  const phone=document.getElementById('epp-phone').value.trim();
+  const instagram=document.getElementById('epp-instagram').value.trim().replace(/^@/,'');
   if(!name){showToast('⚠️ Name is required!');return;}
-  const updated={...c,name,city:city||c.city,country:country||c.country,segment:eppSeg,note,tags,industry,age};
+  const updated={...c,name,city:city||c.city,state:state||c.state,country:country||c.country,segment:eppSeg,note,tags,industry,age,email,phone,instagram};
   connections=connections.map(x=>x.id===editPersonId?updated:x);
   if(c.firestoreId){
     const {db,doc,updateDoc}=window._fb;
-    await updateDoc(doc(db,'users',window.currentUser.uid,'connections',c.firestoreId),{name,city:updated.city,country:updated.country,segment:eppSeg,note,tags,industry,age});
+    await updateDoc(doc(db,'users',window.currentUser.uid,'connections',c.firestoreId),{name,city:updated.city,state:updated.state,country:updated.country,segment:eppSeg,note,tags,industry,age,email,phone,instagram});
   }
   closeModal('epp-modal');editPersonId=null;
   renderSegBar();renderMarkers();renderPeople();renderBadges();
@@ -1098,6 +1156,17 @@ function switchTab(tab,tabEl){
   if(tab==='ai'){document.getElementById('ai-input').focus();}
 }
 
+// ── CONTACT FIELDS TOGGLE ──
+function toggleContactFields(prefix){
+  const fields = document.getElementById(prefix+'-contact-fields');
+  const btn = document.getElementById(prefix+'-contact-toggle');
+  const isOpen = fields.style.display !== 'none';
+  fields.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '+ Contact Info (email, phone, Instagram)' : '− Hide Contact Info';
+  btn.style.borderColor = isOpen ? 'rgba(255,255,255,.15)' : 'rgba(99,102,241,.4)';
+  btn.style.color = isOpen ? '#64748B' : '#A5B4FC';
+}
+
 // ── AI CHAT ──
 let aiHistory = [];
 
@@ -1105,9 +1174,9 @@ function buildNetworkContext(){
   if(!connections.length) return "The user has no connections yet.";
   const lines = connections.map(function(c){
     const seg = getSeg(c.segment);
-    let line = "- " + c.name + ": " + c.city + ", " + c.country + " | Segment: " + seg.label;
+    let line = "- " + c.name + ": " + c.city + (c.state?", "+c.state:"") + ", " + c.country + " | Segment: " + seg.label;
     if(c.industry) line += " | Industry: " + c.industry;
-    if(c.age) line += " | Age: " + c.age;
+    if(c.age) line += " | Birthday: " + c.age;
     if(c.note) line += " | Note: " + c.note;
     if(c.tags&&c.tags.length) line += " | Tags: " + c.tags.join(", ");
     return line;
