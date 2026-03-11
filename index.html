@@ -733,7 +733,7 @@ window.loadUserData=async function(user){
   updateHeaderSub();
   if(!map)initMap();
   else{renderMarkers();renderSegBar();renderPeople();renderBadges();}
-  setTimeout(showReminders, 800);
+  showReminders();
 };
 
 function populateProfileUI(){
@@ -751,8 +751,7 @@ function initMap(){
   map=new mapboxgl.Map({container:'map',style:'mapbox://styles/mapbox/dark-v11',center:[20,20],zoom:1.8,projection:'globe',attributionControl:false});
   map.on('load',()=>{
     map.setFog({color:'rgb(7,9,15)','high-color':'rgb(15,25,55)','horizon-blend':.02,'space-color':'rgb(3,5,12)','star-intensity':.7});
-    renderMarkers();renderSegBar();renderPeople();renderBadges();
-    // Fly to user's real location
+    renderMarkers();renderSegBar();renderPeople();renderBadges();showReminders();
     if(navigator.geolocation){
       navigator.geolocation.getCurrentPosition(function(pos){
         map.flyTo({center:[pos.coords.longitude,pos.coords.latitude],zoom:4,duration:2000,essential:true});
@@ -1126,19 +1125,30 @@ async function savePersonEdit(){
   const industry=document.getElementById('epp-industry').value;
   const age=document.getElementById('epp-age').value.trim();
   const agenum=document.getElementById('epp-agenum').value.trim();
-  const email=document.getElementById('epp-email').value.trim();
-  const phone=document.getElementById('epp-phone').value.trim();
-  const instagram=document.getElementById('epp-instagram').value.trim().replace(/^@/,'');
-  if(!name){showToast('⚠️ Name is required!');return;}
+  const emailEl=document.getElementById('epp-email');
+  const phoneEl=document.getElementById('epp-phone');
+  const igEl=document.getElementById('epp-instagram');
+  const email=emailEl?emailEl.value.trim():'';
+  const phone=phoneEl?phoneEl.value.trim():'';
+  const instagram=igEl?igEl.value.trim().replace(/^@/,''):'';
+  if(!name){showToast('\u26a0\ufe0f Name is required!');return;}
   const updated={...c,name,city:city||c.city,state:state||c.state,country:country||c.country,segment:eppSeg,note,tags,industry,age,agenum,email,phone,instagram};
   connections=connections.map(x=>x.id===editPersonId?updated:x);
-  if(c.firestoreId){
-    const {db,doc,updateDoc}=window._fb;
-    await updateDoc(doc(db,'users',window.currentUser.uid,'connections',c.firestoreId),{name,city:updated.city,state:updated.state,country:updated.country,segment:eppSeg,note,tags,industry,age,agenum,email,phone,instagram});
-  }
+  try{
+    const {db,doc,updateDoc,addDoc,collection}=window._fb;
+    const uid=window.currentUser.uid;
+    if(c.firestoreId){
+      await updateDoc(doc(db,'users',uid,'connections',c.firestoreId),{name,city:updated.city,state:updated.state,country:updated.country,lat:updated.lat,lng:updated.lng,segment:eppSeg,note,tags,industry,age,agenum,email,phone,instagram});
+    } else {
+      // No firestoreId — save as new Firestore doc and update local reference
+      const ref=await addDoc(collection(db,'users',uid,'connections'),{...updated,firestoreId:undefined});
+      updated.firestoreId=ref.id;
+      connections=connections.map(x=>x.id===editPersonId?updated:x);
+    }
+  }catch(err){showToast('Save error: '+err.message);console.error(err);return;}
   closeModal('epp-modal');editPersonId=null;
   renderSegBar();renderMarkers();renderPeople();renderBadges();showReminders();
-  if(profileInited)renderProfileData();updateHeaderSub();showToast('✅ Connection updated!');
+  if(profileInited)renderProfileData();updateHeaderSub();showToast('\u2705 Connection updated!');
 }
 async function deletePerson(){
   if(!editPersonId)return;
