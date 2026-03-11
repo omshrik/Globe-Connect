@@ -84,6 +84,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .btn-primary{background:linear-gradient(135deg,#6366F1,#818CF8);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.3)}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.45)}
 .tabs{display:flex;gap:3px;padding:10px 20px 0;flex-shrink:0}
+
+/* ── REMINDER BANNER ── */
+#reminder-banner{display:none;align-items:center;gap:10px;padding:9px 16px;margin:8px 20px 0;border-radius:12px;font-size:13px;flex-shrink:0;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+#reminder-banner.show{display:flex;}
+#reminder-banner.type-birthday{background:rgba(245,200,66,.13);border:1px solid rgba(245,200,66,.3);color:#F5C842;}
+#reminder-banner.type-followup{background:rgba(99,102,241,.13);border:1px solid rgba(99,102,241,.3);color:#A5B4FC;}
+#reminder-banner.type-checkin{background:rgba(0,201,167,.11);border:1px solid rgba(0,201,167,.28);color:#00C9A7;}
+.reminder-icon{font-size:18px;flex-shrink:0;}
+.reminder-text{flex:1;line-height:1.4;}
+.reminder-text strong{font-weight:700;}
+.reminder-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.7;}
+.reminder-nav{display:flex;gap:4px;flex-shrink:0;align-items:center;}
+.reminder-nav button{background:rgba(255,255,255,.12);border:none;border-radius:5px;color:inherit;font-size:11px;padding:2px 6px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.reminder-nav button:hover{background:rgba(255,255,255,.22);}
+.reminder-count{font-size:11px;opacity:.6;}
 .tab{background:transparent;border:1px solid transparent;color:var(--muted);border-radius:8px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .tab.active{background:rgba(99,102,241,.17);border-color:rgba(99,102,241,.38);color:#A5B4FC}
 .content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
@@ -107,7 +122,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .mapboxgl-ctrl-bottom-right,.mapboxgl-ctrl-bottom-left{display:none}
 .gc-marker{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;cursor:pointer;border:2.5px solid rgba(255,255,255,.45);box-shadow:0 3px 14px rgba(0,0,0,.5);transition:transform .18s;font-family:'DM Sans',sans-serif;position:relative}
 .gc-marker:hover,.gc-marker.selected{transform:scale(1.2)}
-.pulse{position:absolute;inset:-5px;border-radius:50%;border:2px solid currentColor;animation:pulse 2s infinite;opacity:0}
+.pulse{position:absolute;inset:-5px;border-radius:50%;border:2px solid currentColor;animation:pulse 2s infinite;opacity:0;pointer-events:none}
 @keyframes pulse{0%{transform:scale(.9);opacity:.7}100%{transform:scale(1.6);opacity:0}}
 .scroll-panel{flex:1;overflow-y:auto;padding:10px 20px 20px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
@@ -336,8 +351,19 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
   </div>
 </header>
 
+<!-- REMINDER BANNER -->
+<div id="reminder-banner" onclick="reminderClick()">
+  <div class="reminder-icon" id="reminder-icon">🎂</div>
+  <div class="reminder-text" id="reminder-text"></div>
+  <div class="reminder-nav">
+    <span class="reminder-count" id="reminder-count"></span>
+    <button onclick="event.stopPropagation();prevReminder()">‹</button>
+    <button onclick="event.stopPropagation();nextReminder()">›</button>
+    <button onclick="event.stopPropagation();dismissReminder()" title="Dismiss">✕</button>
+  </div>
+</div>
+
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('map',this)">🗺️ Map</button>
   <button class="tab" onclick="switchTab('people',this)">👥 People</button>
   <button class="tab" onclick="switchTab('badges',this)">🏆 Badges</button>
   <button class="tab" onclick="switchTab('profile',this)">👤 Profile</button>
@@ -481,7 +507,8 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     <div class="form-field"><label>Segment</label><div class="seg-pills" id="ap-pills"></div></div>
     <div style="display:flex;gap:10px;">
       <div class="form-field" style="flex:1"><label>Industry</label><select id="ap-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
-      <div class="form-field" style="flex:0 0 110px"><label>🎂 Birthday</label><input type="text" id="ap-age" placeholder="MM/DD" style="text-align:center;" /></div>
+      <div class="form-field" style="flex:0 0 90px"><label>🎂 Birthday</label><input type="text" id="ap-age" placeholder="MM/DD" style="text-align:center;" /></div>
+      <div class="form-field" style="flex:0 0 70px"><label>🎈 Age</label><input type="text" id="ap-agenum" placeholder="e.g. 21" style="text-align:center;" /></div>
     </div>
     <div class="form-field"><label>Note (how you met)</label><textarea id="ap-note" rows="2" placeholder="Met at orientation, conference..."></textarea></div>
     <div class="form-field"><label>Tags (comma-separated)</label><input type="text" id="ap-tags" placeholder="Tech, Soccer, Music" /></div>
@@ -509,7 +536,8 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     <div class="form-field"><label>Move to Segment</label><div class="seg-pills" id="epp-pills"></div></div>
     <div style="display:flex;gap:10px;">
       <div class="form-field" style="flex:1"><label>Industry</label><select id="epp-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
-      <div class="form-field" style="flex:0 0 110px"><label>🎂 Birthday</label><input type="text" id="epp-age" placeholder="MM/DD" style="text-align:center;" /></div>
+      <div class="form-field" style="flex:0 0 90px"><label>🎂 Birthday</label><input type="text" id="epp-age" placeholder="MM/DD" style="text-align:center;" /></div>
+      <div class="form-field" style="flex:0 0 70px"><label>🎈 Age</label><input type="text" id="epp-agenum" placeholder="e.g. 21" style="text-align:center;" /></div>
     </div>
     <div class="form-field"><label>Note</label><textarea id="epp-note" rows="3"></textarea></div>
     <div class="form-field"><label>Tags (comma-separated)</label><input type="text" id="epp-tags" /></div>
@@ -705,6 +733,7 @@ window.loadUserData=async function(user){
   updateHeaderSub();
   if(!map)initMap();
   else{renderMarkers();renderSegBar();renderPeople();renderBadges();}
+  setTimeout(showReminders, 800);
 };
 
 function populateProfileUI(){
@@ -746,7 +775,11 @@ function renderMarkers(){
     const el=document.createElement('div');
     el.className='gc-marker';el.style.background=seg.color;
     el.innerHTML=`<div class="pulse" style="color:${seg.color};border-color:${seg.color}"></div>${c.name.charAt(0)}`;
-    el.addEventListener('click',()=>showPopup(c,el));
+    // Use both click and touchend for reliability on all devices
+    const handleMarkerClick = (e) => { e.stopPropagation(); showPopup(c,el); };
+    el.addEventListener('click', handleMarkerClick);
+    el.addEventListener('touchend', handleMarkerClick);
+    el.style.pointerEvents = 'auto';
     const marker=new mapboxgl.Marker({element:el,anchor:'center'}).setLngLat([c.lng,c.lat]).addTo(map);
     markers[c.id]={marker,el};
   });
@@ -769,7 +802,7 @@ function showPopup(c,el){
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
         <span style="display:inline-flex;align-items:center;gap:4px;background:${seg.color}22;color:${seg.color};font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">${seg.emoji} ${seg.label}</span>
         ${c.industry?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,.15);color:#00C9A7;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">💼 ${c.industry}</span>`:''}
-        ${c.age?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,200,66,.12);color:#F5C842;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">🎂 ${c.age}</span>`:''}
+        ${c.age?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,200,66,.12);color:#F5C842;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">🎂 ${c.age}${c.agenum?' · '+c.agenum+' yrs':''}</span>`:c.agenum?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,200,66,.12);color:#F5C842;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">🎈 Age ${c.agenum}</span>`:''}
       </div>
       ${tags?`<div class="popup-tags">${tags}</div>`:''}
       ${(c.email||c.phone||c.instagram)?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:5px;">
@@ -916,26 +949,27 @@ async function addPerson(){
   const tags=document.getElementById('ap-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const industry=document.getElementById('ap-industry').value;
   const age=document.getElementById('ap-age').value.trim();
+  const agenum=document.getElementById('ap-agenum').value.trim();
   const email=document.getElementById('ap-email').value.trim();
   const phone=document.getElementById('ap-phone').value.trim();
   const instagram=document.getElementById('ap-instagram').value.trim().replace(/^@/,'');
   if(!name||!city){showToast('⚠️ Name and city are required!');return;}
   showToast('📍 Finding location...');
   const geo=await geocodePlace(city,state,country);
-  const cData={id:Date.now().toString(),name,city,state,country:country||'Unknown',lat:geo.lat,lng:geo.lng,segment:selSeg,note,tags,industry,age,email,phone,instagram,added:new Date().toISOString()};
+  const cData={id:Date.now().toString(),name,city,state,country:country||'Unknown',lat:geo.lat,lng:geo.lng,segment:selSeg,note,tags,industry,age,agenum,email,phone,instagram,added:new Date().toISOString()};
   const {db,collection,addDoc}=window._fb;
   try{
     const ref=await addDoc(collection(db,'users',window.currentUser.uid,'connections'),cData);
     cData.firestoreId=ref.id;
   }catch(e){showToast('⚠️ Save failed. Check internet.');console.error(e);return;}
   connections.push(cData);
-  ['ap-name','ap-city','ap-state','ap-country','ap-note','ap-tags','ap-age','ap-email','ap-phone','ap-instagram'].forEach(id=>document.getElementById(id).value='');
+  ['ap-name','ap-city','ap-state','ap-country','ap-note','ap-tags','ap-age','ap-agenum','ap-email','ap-phone','ap-instagram'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ap-industry').value='';
   document.getElementById('ap-contact-fields').style.display='none';
   document.getElementById('ap-contact-toggle').textContent='+ Add Contact Info (email, phone, Instagram)';
   document.getElementById('ap-contact-toggle').style.color='#64748B';
   closeModal('add-modal');
-  renderSegBar();renderMarkers();renderPeople();renderBadges();
+  renderSegBar();renderMarkers();renderPeople();renderBadges();showReminders();
   if(profileInited)renderProfileData();
   updateHeaderSub();
   setTimeout(()=>{
@@ -1057,6 +1091,7 @@ function openEditPerson(id){
   document.getElementById('epp-tags').value=(c.tags||[]).join(', ');
   document.getElementById('epp-industry').value=c.industry||'';
   document.getElementById('epp-age').value=c.age||'';
+  document.getElementById('epp-agenum').value=c.agenum||'';
   document.getElementById('epp-email').value=c.email||'';
   document.getElementById('epp-phone').value=c.phone||'';
   document.getElementById('epp-instagram').value=c.instagram?('@'+c.instagram):'';
@@ -1090,18 +1125,19 @@ async function savePersonEdit(){
   const tags=document.getElementById('epp-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const industry=document.getElementById('epp-industry').value;
   const age=document.getElementById('epp-age').value.trim();
+  const agenum=document.getElementById('epp-agenum').value.trim();
   const email=document.getElementById('epp-email').value.trim();
   const phone=document.getElementById('epp-phone').value.trim();
   const instagram=document.getElementById('epp-instagram').value.trim().replace(/^@/,'');
   if(!name){showToast('⚠️ Name is required!');return;}
-  const updated={...c,name,city:city||c.city,state:state||c.state,country:country||c.country,segment:eppSeg,note,tags,industry,age,email,phone,instagram};
+  const updated={...c,name,city:city||c.city,state:state||c.state,country:country||c.country,segment:eppSeg,note,tags,industry,age,agenum,email,phone,instagram};
   connections=connections.map(x=>x.id===editPersonId?updated:x);
   if(c.firestoreId){
     const {db,doc,updateDoc}=window._fb;
-    await updateDoc(doc(db,'users',window.currentUser.uid,'connections',c.firestoreId),{name,city:updated.city,state:updated.state,country:updated.country,segment:eppSeg,note,tags,industry,age,email,phone,instagram});
+    await updateDoc(doc(db,'users',window.currentUser.uid,'connections',c.firestoreId),{name,city:updated.city,state:updated.state,country:updated.country,segment:eppSeg,note,tags,industry,age,agenum,email,phone,instagram});
   }
   closeModal('epp-modal');editPersonId=null;
-  renderSegBar();renderMarkers();renderPeople();renderBadges();
+  renderSegBar();renderMarkers();renderPeople();renderBadges();showReminders();
   if(profileInited)renderProfileData();updateHeaderSub();showToast('✅ Connection updated!');
 }
 async function deletePerson(){
@@ -1291,6 +1327,121 @@ function appendTyping(id){
 function removeTyping(id){
   document.getElementById(id)?.remove();
 }
+
+// ── REMINDERS ──
+let reminders = [];
+let reminderIndex = 0;
+let dismissedReminders = new Set();
+
+function buildReminders() {
+  const today = new Date();
+  const todayMonth = today.getMonth() + 1;
+  const todayDay = today.getDate();
+  const list = [];
+
+  connections.forEach(c => {
+    // Birthday reminders
+    if (c.age) {
+      const parts = c.age.split('/');
+      if (parts.length === 2) {
+        const bMonth = parseInt(parts[0]);
+        const bDay = parseInt(parts[1]);
+        if (!isNaN(bMonth) && !isNaN(bDay)) {
+          // Days until birthday (this year or next)
+          const thisYearBday = new Date(today.getFullYear(), bMonth - 1, bDay);
+          const diff = Math.ceil((thisYearBday - today) / (1000 * 60 * 60 * 24));
+          const absDiff = diff < 0 ? diff + 365 : diff;
+
+          if (absDiff === 0) {
+            list.push({ type: 'birthday', icon: '🎂', text: `<strong>Happy Birthday, ${c.name}!</strong> Today is their birthday — send them a message!`, personId: c.id, priority: 0 });
+          } else if (absDiff <= 3) {
+            list.push({ type: 'birthday', icon: '🎂', text: `<strong>${c.name}'s birthday</strong> is in ${absDiff} day${absDiff>1?'s':''}! (${c.age})`, personId: c.id, priority: 1 });
+          } else if (absDiff <= 7) {
+            list.push({ type: 'birthday', icon: '🎁', text: `<strong>${c.name}</strong> has a birthday coming up in ${absDiff} days (${c.age}) — plan ahead!`, personId: c.id, priority: 2 });
+          }
+        }
+      }
+    }
+
+    // Follow-up reminders based on when added
+    if (c.added) {
+      const addedDate = new Date(c.added);
+      const daysSince = Math.floor((today - addedDate) / (1000 * 60 * 60 * 24));
+      if (daysSince === 30) {
+        list.push({ type: 'checkin', icon: '👋', text: `It's been a month since you met <strong>${c.name}</strong> — time to check in!`, personId: c.id, priority: 3 });
+      } else if (daysSince === 7) {
+        list.push({ type: 'followup', icon: '💬', text: `<strong>${c.name}</strong> was added a week ago — have you followed up yet?`, personId: c.id, priority: 3 });
+      }
+    }
+
+    // Age milestone reminders (turning a round number)
+    if (c.agenum) {
+      const age = parseInt(c.agenum);
+      if (!isNaN(age) && c.age) {
+        const parts = c.age.split('/');
+        if (parts.length === 2) {
+          const bMonth = parseInt(parts[0]);
+          const bDay = parseInt(parts[1]);
+          const thisYearBday = new Date(today.getFullYear(), bMonth - 1, bDay);
+          const diff = Math.ceil((thisYearBday - today) / (1000 * 60 * 60 * 24));
+          const absDiff = diff < 0 ? diff + 365 : diff;
+          const turningAge = age + (diff < 0 ? 1 : (absDiff <= 30 ? 1 : 0));
+          if (absDiff <= 30 && turningAge % 10 === 0) {
+            list.push({ type: 'birthday', icon: '🎉', text: `<strong>${c.name}</strong> is turning <strong>${turningAge}</strong> — big milestone! 🥳`, personId: c.id, priority: 1 });
+          }
+        }
+      }
+    }
+  });
+
+  // Sort by priority
+  list.sort((a, b) => a.priority - b.priority);
+  return list;
+}
+
+function showReminders() {
+  reminders = buildReminders().filter(r => !dismissedReminders.has(r.personId + '_' + r.type + '_' + r.text));
+  reminderIndex = 0;
+  if (reminders.length === 0) {
+    document.getElementById('reminder-banner').classList.remove('show');
+    return;
+  }
+  displayReminder(0);
+}
+
+function displayReminder(idx) {
+  const banner = document.getElementById('reminder-banner');
+  const r = reminders[idx];
+  if (!r) { banner.classList.remove('show'); return; }
+  // Reset type classes, keep show
+  banner.classList.remove('type-birthday','type-followup','type-checkin');
+  banner.classList.add('show','type-' + r.type);
+  document.getElementById('reminder-icon').textContent = r.icon;
+  document.getElementById('reminder-text').innerHTML = r.text;
+  document.getElementById('reminder-count').textContent = reminders.length > 1 ? `${idx+1}/${reminders.length}` : '';
+}
+
+function nextReminder() {
+  reminderIndex = (reminderIndex + 1) % reminders.length;
+  displayReminder(reminderIndex);
+}
+function prevReminder() {
+  reminderIndex = (reminderIndex - 1 + reminders.length) % reminders.length;
+  displayReminder(reminderIndex);
+}
+function dismissReminder() {
+  const r = reminders[reminderIndex];
+  if (r) dismissedReminders.add(r.personId + '_' + r.type + '_' + r.text);
+  reminders.splice(reminderIndex, 1);
+  if (reminders.length === 0) { document.getElementById('reminder-banner').classList.remove('show'); return; }
+  reminderIndex = Math.min(reminderIndex, reminders.length - 1);
+  displayReminder(reminderIndex);
+}
+function reminderClick() {
+  const r = reminders[reminderIndex];
+  if (r && r.personId) openEditPerson(r.personId);
+}
+
 </script>
 </body>
 </html>
