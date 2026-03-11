@@ -428,7 +428,7 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
         <div class="rank-badge">🔥 Globetrotter · Level 1</div>
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="openModal('edit-modal')">✏️ Edit Profile</button>
-          <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="copyRef()">📤 Share</button>
+          <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="shareProfile()">📤 Share</button>
         </div>
       </div>
       <div class="profile-main">
@@ -499,6 +499,25 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
   <button class="nav-btn" id="nav-profile" onclick="switchTab('profile',null,this)"><span class="ni">👤</span>Profile</button>
   <button class="nav-btn" id="nav-ai" onclick="switchTab('ai',null,this)"><span class="ni">✨</span>AI</button>
 </nav>
+</div>
+
+<!-- SHARE CARD MODAL -->
+<div class="overlay" id="share-modal" onclick="if(event.target===this)closeModal('share-modal')">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-hdr">
+      <div class="modal-title">👋 Add to GlobeConnect</div>
+      <button class="modal-close" onclick="closeModal('share-modal')">✕</button>
+    </div>
+    <div id="share-profile-card" style="background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(0,201,167,.08));border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:18px;margin-bottom:16px;text-align:center;">
+      <div id="sc-avatar" style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#6366F1,#00C9A7);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:26px;font-weight:900;color:#fff;margin:0 auto 12px;"></div>
+      <div id="sc-name" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:900;"></div>
+      <div id="sc-meta" style="font-size:12.5px;color:#64748B;margin-top:4px;"></div>
+      <div id="sc-bio" style="font-size:13px;color:#94A3B8;margin-top:8px;font-style:italic;line-height:1.5;"></div>
+    </div>
+    <div class="form-field"><label>How did you meet?</label><textarea id="sc-note" rows="2" placeholder="At a conference, through a friend..."></textarea></div>
+    <div class="form-field"><label>Segment</label><div class="seg-pills" id="sc-pills"></div></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px;" onclick="addFromShareCard()">📍 Pin to My Network</button>
+  </div>
 </div>
 
 <!-- ADD PERSON MODAL -->
@@ -744,6 +763,7 @@ window.loadUserData=async function(user){
   if(!map)initMap();
   else{renderMarkers();renderSegBar();renderPeople();renderBadges();}
   showReminders();
+  checkShareParams();
 };
 
 function populateProfileUI(){
@@ -1224,6 +1244,104 @@ async function deletePerson(){
 function updateHeaderSub(){
   const ctries=[...new Set(connections.map(c=>c.country))].length;
   document.getElementById('hdr-sub').textContent=`${connections.length} people · ${ctries} countries`;
+}
+// ── SHARE CARD (URL param handler) ──
+let shareCardData = null;
+let scSeg = 'college';
+
+function checkShareParams() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('add')) return;
+  shareCardData = {
+    handle: params.get('add') || '',
+    name: params.get('name') || '',
+    city: params.get('city') || '',
+    country: params.get('country') || '',
+    industry: params.get('industry') || '',
+    bio: params.get('bio') || '',
+    school: params.get('school') || ''
+  };
+  // Clean URL without reloading
+  window.history.replaceState({}, '', window.location.pathname);
+  // Show modal after auth + data loads
+  setTimeout(openShareCardModal, 1200);
+}
+
+function openShareCardModal() {
+  if (!shareCardData) return;
+  const d = shareCardData;
+  document.getElementById('sc-avatar').textContent = (d.name || '?').charAt(0).toUpperCase();
+  document.getElementById('sc-name').textContent = d.name || d.handle;
+  const meta = [d.city, d.country].filter(Boolean).join(', ');
+  const metaParts = [meta, d.industry, d.school].filter(Boolean).join(' · ');
+  document.getElementById('sc-meta').textContent = metaParts ? '📍 ' + metaParts : '';
+  document.getElementById('sc-bio').textContent = d.bio || '';
+  document.getElementById('sc-bio').style.display = d.bio ? 'block' : 'none';
+  scSeg = 'college';
+  document.getElementById('sc-pills').innerHTML = segments.map(s =>
+    `<button class="seg-pill" onclick="pickScSeg('${s.id}',this)"
+      style="${scSeg===s.id?`background:${s.color}22;border-color:${s.color}55;color:${s.color};`:''}">
+      ${s.emoji} ${s.label}</button>`).join('');
+  document.getElementById('sc-note').value = '';
+  openModal('share-modal');
+}
+
+function pickScSeg(id, el) {
+  scSeg = id;
+  document.querySelectorAll('#sc-pills .seg-pill').forEach(p => p.removeAttribute('style'));
+  const seg = getSeg(id);
+  el.style.background = `${seg.color}22`;
+  el.style.borderColor = `${seg.color}55`;
+  el.style.color = seg.color;
+}
+
+async function addFromShareCard() {
+  if (!shareCardData) return;
+  const d = shareCardData;
+  const note = document.getElementById('sc-note').value.trim();
+  const geo = await geocodePlace(d.city, '', d.country);
+  const cData = {
+    id: Date.now().toString(), name: d.name || d.handle,
+    city: d.city, state: '', country: d.country || 'Unknown',
+    lat: geo.lat, lng: geo.lng, segment: scSeg,
+    note: note, tags: [], industry: d.industry,
+    age: '', agenum: '', email: '', phone: '', instagram: '',
+    added: new Date().toISOString()
+  };
+  connections.push(cData);
+  const {db, collection, addDoc} = window._fb;
+  if (window.currentUser) {
+    const ref = await addDoc(collection(db,'users',window.currentUser.uid,'connections'), cData);
+    cData.firestoreId = ref.id;
+  }
+  closeModal('share-modal');
+  shareCardData = null;
+  renderSegBar(); renderMarkers(); renderPeople(); renderBadges(); showReminders();
+  if (profileInited) renderProfileData();
+  updateHeaderSub();
+  setTimeout(() => {
+    map.flyTo({center:[cData.lng, cData.lat], zoom:4, duration:1200, essential:true});
+    const m = markers[cData.id]; if(m) showPopup(cData, m.el);
+  }, 100);
+  switchTab('map');
+  showToast(`📍 ${cData.name} pinned!`);
+}
+
+function shareProfile(){
+  const u = userProfile;
+  const base = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams({
+    add: u.handle || 'user',
+    name: u.displayName || '',
+    city: (u.location || '').split(',')[0].trim(),
+    country: (u.location || '').split(',').pop().trim(),
+    industry: u.industry || '',
+    bio: u.bio || '',
+    school: u.school || ''
+  });
+  const url = `${base}?${params.toString()}`;
+  navigator.clipboard.writeText(url).catch(()=>{});
+  showToast('🔗 Profile link copied! Send it to anyone.');
 }
 function copyRef(){
   const code=document.getElementById('ref-code-card')?.textContent||'@globeconnect';
