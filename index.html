@@ -423,6 +423,7 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
         <textarea class="pbio" id="pbio" rows="2" placeholder="Add a bio..."></textarea>
         <div class="pmeta">
           <div class="pmeta-item">📍 <strong id="ploc">—</strong></div>
+          <div class="pmeta-item">💼 <strong id="pindustry" style="display:none"></strong></div>
           <div class="pmeta-item">🎓 <strong id="pschool">—</strong></div>
         </div>
         <div class="rank-badge">🔥 Globetrotter · Level 1</div>
@@ -606,8 +607,9 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     <div class="form-field"><label>Display Name</label><input type="text" id="ep-name" /></div>
     <div class="form-field"><label>Username / Handle</label><input type="text" id="ep-handle" /></div>
     <div class="form-field"><label>Bio</label><textarea id="ep-bio" rows="2"></textarea></div>
-    <div class="form-field"><label>Location</label><input type="text" id="ep-loc" /></div>
-    <div class="form-field"><label>School / University</label><input type="text" id="ep-school" /></div>
+    <div class="form-field"><label>Location (e.g. New York, USA)</label><input type="text" id="ep-loc" placeholder="e.g. New York, USA" /></div>
+    <div class="form-field"><label>Industry</label><select id="ep-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Real Estate</option><option>Marketing</option><option>Design</option><option>Law</option><option>Engineering</option><option>Media</option><option>Sports</option><option>Music</option><option>Art</option><option>Entrepreneurship</option><option>Government</option><option>Other</option></select></div>
+    <div class="form-field"><label>School / University</label><input type="text" id="ep-school" placeholder="e.g. NYU, Harvard..." /></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-top:4px;" onclick="saveProfile()">Save Changes ✓</button>
   </div>
 </div>
@@ -774,6 +776,9 @@ function populateProfileUI(){
   document.getElementById('pbio').value=u.bio||'';
   document.getElementById('ploc').textContent=u.location||'—';
   document.getElementById('pschool').textContent=u.school||'—';
+  const indEl=document.getElementById('pindustry');
+  if(u.industry){indEl.textContent=u.industry;indEl.parentElement.style.display='flex';}
+  else{indEl.parentElement.style.display='none';}
 }
 
 // ── MAP ──
@@ -1125,6 +1130,7 @@ function openEditModal(){
   document.getElementById('ep-bio').value=userProfile.bio||'';
   document.getElementById('ep-loc').value=userProfile.location||'';
   document.getElementById('ep-school').value=userProfile.school||'';
+  document.getElementById('ep-industry').value=userProfile.industry||'';
   document.getElementById('edit-modal').classList.add('open');
 }
 async function saveProfile(){
@@ -1133,7 +1139,8 @@ async function saveProfile(){
   const bio=document.getElementById('ep-bio').value.trim();
   const location=document.getElementById('ep-loc').value.trim();
   const school=document.getElementById('ep-school').value.trim();
-  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:handle||userProfile.handle,bio,location,school};
+  const industry=document.getElementById('ep-industry').value.trim();
+  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:handle||userProfile.handle,bio,location,school,industry};
   await window._fb.setDoc(window._fb.doc(window._fb.db,'users',window.currentUser.uid),userProfile,{merge:true});
   populateProfileUI();
   const initials=(userProfile.displayName||'?').charAt(0).toUpperCase();
@@ -1329,16 +1336,17 @@ async function addFromShareCard() {
 
 function shareProfile(){
   const u = userProfile;
-  const base = window.location.origin + window.location.pathname;
-  const params = new URLSearchParams({
-    add: u.handle || 'user',
-    name: u.displayName || '',
-    city: (u.location || '').split(',')[0].trim(),
-    country: (u.location || '').split(',').pop().trim(),
-    industry: u.industry || '',
-    bio: u.bio || '',
-    school: u.school || ''
-  });
+  const base = 'https://omshrik.github.io/Globe-Connect/';
+  const city = (u.location||'').split(',')[0].trim();
+  const country = (u.location||'').split(',').slice(1).join(',').trim();
+  const params = new URLSearchParams();
+  if(u.handle) params.set('add', u.handle);
+  if(u.displayName) params.set('name', u.displayName);
+  if(city) params.set('city', city);
+  if(country) params.set('country', country);
+  if(u.industry) params.set('industry', u.industry);
+  if(u.bio) params.set('bio', u.bio);
+  if(u.school) params.set('school', u.school);
   const url = `${base}?${params.toString()}`;
   navigator.clipboard.writeText(url).catch(()=>{});
   showToast('🔗 Profile link copied! Send it to anyone.');
