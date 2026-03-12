@@ -1487,7 +1487,7 @@ async function addFromSearch(u){
   showToast(`👤 Adding @${u.handle} — pick a segment & save!`);
 }
 
-
+async function saveProfile(){
   const name=document.getElementById('ep-name').value.trim();
   const handle=document.getElementById('ep-handle').value.trim().replace('@','');
   const bio=document.getElementById('ep-bio').value.trim();
