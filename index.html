@@ -1138,7 +1138,8 @@ function renderPeople(){
   const ctries=uniqueCountries(connections).length;
   document.getElementById('st-total').textContent=connections.length;
   document.getElementById('st-countries').textContent=ctries;
-  
+  // Load Person of the Day if not yet loaded
+  if(connections.length>0 && !window._potdLoaded){window._potdLoaded=true;loadPersonOfDay(false);}
   updateHeaderSub();
   const fil=connections.filter(c=>!q||c.name.toLowerCase().includes(q)||c.city.toLowerCase().includes(q)||c.country.toLowerCase().includes(q));
   document.getElementById('people-list').innerHTML=fil.length?fil.map((c,i)=>{
