@@ -402,7 +402,6 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
       <div class="stats-row">
         <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">Connections</div></div>
         <div class="stat-card"><div class="stat-num" id="st-countries">0</div><div class="stat-lbl">Countries</div></div>
-        <div class="stat-card"><div class="stat-num" id="st-segs">4</div><div class="stat-lbl">Segments</div></div>
       </div>
       <input class="search-input" type="text" id="search" placeholder="🔍  Search people, cities, countries..." oninput="renderPeople()" />
       <div id="people-list"></div>
@@ -708,6 +707,16 @@ const DEFAULT_SEGMENTS=[
 ];
 const COUNTRY_GEO={'USA':{lat:39,lng:-98},'United States':{lat:39,lng:-98},'Germany':{lat:51,lng:10},'France':{lat:47,lng:2},'Japan':{lat:36,lng:138},'India':{lat:22,lng:79},'Brazil':{lat:-15,lng:-47},'UK':{lat:54,lng:-2},'United Kingdom':{lat:54,lng:-2},'Italy':{lat:42,lng:12},'Canada':{lat:56,lng:-106},'Australia':{lat:-27,lng:133},'China':{lat:35,lng:104},'Spain':{lat:40,lng:-4},'Mexico':{lat:24,lng:-102},'Argentina':{lat:-35,lng:-65},'UAE':{lat:25,lng:55},'Nigeria':{lat:9,lng:8},'Ghana':{lat:8,lng:-1},'South Africa':{lat:-29,lng:25},'Kenya':{lat:1,lng:38},'Egypt':{lat:27,lng:30},'Turkey':{lat:39,lng:35},'Russia':{lat:61,lng:105},'South Korea':{lat:37,lng:127.5},'Indonesia':{lat:-5,lng:120},'Sweden':{lat:62,lng:16},'Norway':{lat:65,lng:14},'Netherlands':{lat:52,lng:5},'Poland':{lat:52,lng:20},'Portugal':{lat:39,lng:-8},'Greece':{lat:39,lng:22},'Pakistan':{lat:31,lng:74},'Thailand':{lat:15,lng:101},'Vietnam':{lat:14,lng:108},'Philippines':{lat:13,lng:122},'Colombia':{lat:4,lng:-72},'Morocco':{lat:32,lng:-6},'Singapore':{lat:1.35,lng:103.82},'Malaysia':{lat:4,lng:109},'New Zealand':{lat:-42,lng:174}};
 const FLAGS={'Germany':'🇩🇪','Argentina':'🇦🇷','India':'🇮🇳','Ghana':'🇬🇭','Japan':'🇯🇵','Italy':'🇮🇹','UAE':'🇦🇪','France':'🇫🇷','USA':'🇺🇸','UK':'🇬🇧','Brazil':'🇧🇷','Canada':'🇨🇦','Australia':'🇦🇺','China':'🇨🇳','Spain':'🇪🇸','Mexico':'🇲🇽','South Korea':'🇰🇷','Nigeria':'🇳🇬','South Africa':'🇿🇦','Kenya':'🇰🇪','Egypt':'🇪🇬','Turkey':'🇹🇷','Russia':'🇷🇺','Netherlands':'🇳🇱','Sweden':'🇸🇪','Norway':'🇳🇴','Poland':'🇵🇱','Greece':'🇬🇷','Portugal':'🇵🇹','United States':'🇺🇸','United Kingdom':'🇬🇧','Singapore':'🇸🇬','New Zealand':'🇳🇿','Pakistan':'🇵🇰','Thailand':'🇹🇭','Vietnam':'🇻🇳','Philippines':'🇵🇭','Colombia':'🇨🇴','Morocco':'🇲🇦','Malaysia':'🇲🇾','Indonesia':'🇮🇩','Switzerland':'🇨🇭','Saudi Arabia':'🇸🇦','Qatar':'🇶🇦','Israel':'🇮🇱','Chile':'🇨🇱','Peru':'🇵🇪','Jamaica':'🇯🇲'};
+// Normalize country names so "USA", "US", "United States", "united states" all count as one
+function normalizeCountry(c){
+  if(!c||!c.trim())return'Unknown';
+  const s=c.trim().toLowerCase();
+  if(['us','usa','united states','united states of america','america'].includes(s))return'USA';
+  if(['uk','united kingdom','great britain','england'].includes(s))return'UK';
+  if(['uae','united arab emirates'].includes(s))return'UAE';
+  return c.trim().replace(/\b\w/g,l=>l.toUpperCase());
+}
+function uniqueCountries(conns){return[...new Set(conns.map(c=>normalizeCountry(c.country)).filter(c=>c!=='Unknown'))];}
 const CONTINENTS={'North America':['USA','United States','Canada','Mexico','Cuba','Jamaica','Trinidad'],'South America':['Brazil','Argentina','Colombia','Chile','Peru','Venezuela','Ecuador','Bolivia','Paraguay','Uruguay'],'Europe':['Germany','France','Italy','Spain','UK','United Kingdom','Netherlands','Sweden','Norway','Poland','Greece','Portugal','Switzerland','Austria','Belgium','Denmark','Finland','Ireland','Czech Republic','Hungary','Romania','Ukraine','Russia','Turkey'],'Asia':['India','China','Japan','South Korea','Singapore','Malaysia','Indonesia','Thailand','Vietnam','Philippines','Pakistan','Bangladesh','Sri Lanka','Nepal','UAE','Saudi Arabia','Qatar','Kuwait','Jordan','Lebanon','Israel'],'Africa':['Nigeria','Ghana','South Africa','Kenya','Egypt','Ethiopia','Tanzania','Uganda','Rwanda','Senegal','Morocco'],'Oceania':['Australia','New Zealand']};
 const CONTINENT_COLORS={'North America':'#6366F1','South America':'#00C9A7','Europe':'#F5C842','Asia':'#FF6B6B','Africa':'#FD79A8','Oceania':'#74B9FF'};
 const CONTINENT_ICONS={'North America':'🌎','South America':'🌎','Europe':'🌍','Asia':'🌏','Africa':'🌍','Oceania':'🌏'};
@@ -776,9 +785,17 @@ async function doGoogle(){
     const user=result.user;
     const ref=window._fb.doc(window._fb.db,'users',user.uid);
     const snap=await window._fb.getDoc(ref);
+    const handle=(user.displayName||'user').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     if(!snap.exists()){
-      await window._fb.setDoc(ref,{displayName:user.displayName||'',email:user.email,handle:(user.displayName||'user').toLowerCase().replace(/\s+/g,''),bio:'',location:'',school:'',createdAt:new Date().toISOString()});
+      await window._fb.setDoc(ref,{displayName:user.displayName||'',email:user.email,handle,bio:'',location:'',school:'',createdAt:new Date().toISOString()});
     }
+    // Always register handle
+    await window._fb.setDoc(window._fb.doc(window._fb.db,'handles',handle),{
+      uid:user.uid,displayName:user.displayName||'',handle,
+      city:snap.data()?.city||'',country:snap.data()?.country||'',
+      industry:snap.data()?.industry||'',subIndustry:snap.data()?.subIndustry||'',
+      bio:snap.data()?.bio||'',photoURL:snap.data()?.photoURL||''
+    },{merge:true});
   }catch(e){showAuthErr(authErrMsg(e.code));}
 }
 async function doForgotPassword(){
@@ -816,9 +833,13 @@ window.loadUserData=async function(user){
   const {db,doc,getDoc,getDocs,collection,setDoc}=window._fb;
   const profSnap=await getDoc(doc(db,'users',user.uid));
   userProfile=profSnap.exists()?profSnap.data():{displayName:user.displayName||'',email:user.email,handle:(user.displayName||'user').toLowerCase().replace(/\s+/g,''),bio:'',location:'',school:''};
-  // Auto-register handle so others can find this user
-  const h=(userProfile.handle||'').toLowerCase();
-  if(h) setDoc(doc(db,'handles',h),{uid:user.uid,displayName:userProfile.displayName||'',handle:h,city:userProfile.city||'',country:userProfile.country||'',industry:userProfile.industry||'',subIndustry:userProfile.subIndustry||'',bio:userProfile.bio||'',photoURL:userProfile.photoURL||''},{merge:true});
+  // Auto-register handle so others can find this user — strip spaces/special chars
+  const h=(userProfile.handle||user.displayName||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+  if(h){
+    // Also update handle field in profile if it was messy
+    if(h!==userProfile.handle) userProfile.handle=h;
+    setDoc(doc(db,'handles',h),{uid:user.uid,displayName:userProfile.displayName||'',handle:h,city:userProfile.city||'',country:userProfile.country||'',industry:userProfile.industry||'',subIndustry:userProfile.subIndustry||'',bio:userProfile.bio||'',photoURL:userProfile.photoURL||''},{merge:true});
+  }
 
   const segSnap=await getDocs(collection(db,'users',user.uid,'segments'));
   if(segSnap.empty){
@@ -1023,10 +1044,10 @@ function setSegFilter(id){segFilter=id;renderSegBar();renderMarkers();}
 // ── PEOPLE ──
 function renderPeople(){
   const q=(document.getElementById('search')?.value||'').toLowerCase();
-  const ctries=[...new Set(connections.map(c=>c.country))].length;
+  const ctries=uniqueCountries(connections).length;
   document.getElementById('st-total').textContent=connections.length;
   document.getElementById('st-countries').textContent=ctries;
-  document.getElementById('st-segs').textContent=segments.length;
+  
   updateHeaderSub();
   const fil=connections.filter(c=>!q||c.name.toLowerCase().includes(q)||c.city.toLowerCase().includes(q)||c.country.toLowerCase().includes(q));
   document.getElementById('people-list').innerHTML=fil.length?fil.map((c,i)=>{
@@ -1074,7 +1095,7 @@ function getRank(connCount, ctryCount){
 }
 
 function renderBadges(){
-  const ctryCount=[...new Set(connections.map(c=>c.country))].length;
+  const ctryCount=uniqueCountries(connections).length;
   const connCount=connections.length;
   const defs=[
     // Connection ranks
@@ -1114,7 +1135,7 @@ function initProfileMap(){
 }
 
 function renderProfileData(){
-  const ctries=[...new Set(connections.map(c=>c.country))];
+  const ctries=uniqueCountries(connections);
   const ctryCount=ctries.length;
   const connCount=connections.length;
   const rank=getRank(connCount,ctryCount);
@@ -1147,10 +1168,10 @@ function renderProfileData(){
   }).join('');
   // Countries — grouped by continent
   document.getElementById('ctry-count').textContent=`(${ctries.length})`;
-  // Count people per country
+  // Count people per normalized country
   const ctryCounts = {};
-  connections.forEach(c => { ctryCounts[c.country] = (ctryCounts[c.country]||0)+1; });
-  // Group by continent
+  connections.forEach(c => { const n=normalizeCountry(c.country); ctryCounts[n] = (ctryCounts[n]||0)+1; });
+  // Group by continent (using normalized names)
   const grouped = {};
   ctries.forEach(country => {
     let found = 'Other';
@@ -1421,7 +1442,7 @@ async function quickSearchHandle(){
         resultEl.innerHTML='<p style="color:#F5C842;font-size:12px;">That\'s you! 😄</p>';
         btn.textContent='Search';btn.disabled=false;return;
       }
-      // Pre-fill the form below
+      // Also pre-fill the manual form below as fallback
       document.getElementById('ap-name').value=u.displayName||'';
       document.getElementById('ap-city').value=u.city||'';
       document.getElementById('ap-country').value=u.country||'';
@@ -1432,16 +1453,45 @@ async function quickSearchHandle(){
         setTimeout(()=>{if(u.subIndustry)document.getElementById('ap-subindustry').value=u.subIndustry||'';},50);
       }
       const flag=FLAGS[u.country]||'';
-      resultEl.innerHTML=`<div style="display:flex;align-items:center;gap:8px;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.25);border-radius:9px;padding:9px;">
-        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#00C9A7);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;overflow:hidden;flex-shrink:0;">${u.photoURL?`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;">`:(u.displayName||'?').charAt(0).toUpperCase()}</div>
-        <div><div style="font-size:13px;font-weight:700;color:#E2E8F0;">${u.displayName||'Unknown'} ${flag}</div><div style="font-size:11px;color:#64748B;">@${u.handle}${u.city?' · '+u.city:''}</div></div>
-        <div style="margin-left:auto;font-size:11px;color:#00C9A7;font-weight:700;">✓ Form filled!</div>
+      const segPills=segments.map(s=>`<button onclick="quickAddFromSearch(${JSON.stringify(u).replace(/"/g,'&quot;')},'${s.id}')" style="background:${s.color}22;border:1px solid ${s.color}55;color:${s.color};border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">${s.emoji} ${s.label}</button>`).join('');
+      resultEl.innerHTML=`<div style="background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.25);border-radius:11px;padding:11px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#00C9A7);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;overflow:hidden;flex-shrink:0;">${u.photoURL?`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;">`:(u.displayName||'?').charAt(0).toUpperCase()}</div>
+          <div><div style="font-size:13px;font-weight:700;color:#E2E8F0;">${u.displayName||'Unknown'} ${flag}</div><div style="font-size:11px;color:#64748B;">@${u.handle}${u.city?' · '+u.city:''}</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:#64748B;margin-bottom:6px;">ADD TO SEGMENT:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">${segPills}</div>
       </div>`;
     }
   }catch(err){
     resultEl.innerHTML='<p style="color:#F87171;font-size:12px;">❌ Error. Try again.</p>';
   }
   btn.textContent='Search';btn.disabled=false;
+}
+
+async function quickAddFromSearch(u, segId){
+  // Geocode city
+  let lat=0,lng=0;
+  if(u.city){
+    const query=encodeURIComponent([u.city,u.country].filter(Boolean).join(', '));
+    try{
+      const r=await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${MAPBOX_TOKEN}&limit=1`);
+      const d=await r.json();
+      if(d.features?.length){[lng,lat]=d.features[0].center;}
+    }catch(e){}
+  }
+  const conn={id:Date.now().toString(),name:u.displayName||'',city:u.city||'',state:'',country:u.country||'',lat,lng,segment:segId,note:'',tags:[],industry:u.industry||'',subIndustry:u.subIndustry||'',age:'',agenum:0,email:'',phone:'',instagram:u.handle||'',added:new Date().toISOString()};
+  connections.push(conn);
+  try{
+    const {db,collection,addDoc}=window._fb;
+    const ref=await addDoc(collection(db,'users',window.currentUser.uid,'connections'),conn);
+    conn.firestoreId=ref.id;
+  }catch(e){console.error(e);}
+  renderMarkers();renderPeople();updateHeaderSub();
+  if(profileInited)renderProfileData();
+  closeModal('add-modal');
+  showToast(`✅ ${u.displayName} added!`);
+  if(lat&&lng) setTimeout(()=>map.flyTo({center:[lng,lat],zoom:4,duration:1200,essential:true}),300);
 }
 
 async function searchByHandle(){
@@ -1701,7 +1751,7 @@ async function deletePerson(){
 
 // ── HELPERS ──
 function updateHeaderSub(){
-  const ctries=[...new Set(connections.map(c=>c.country))].length;
+  const ctries=uniqueCountries(connections).length;
   document.getElementById('hdr-sub').textContent=`${connections.length} people · ${ctries} countries`;
 }
 // ── SHARE CARD (URL param handler) ──
