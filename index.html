@@ -166,11 +166,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .avatar-uploading{opacity:.5;pointer-events:none}
 .online-dot{position:absolute;top:-3px;right:-3px;width:13px;height:13px;border-radius:50%;background:#00C9A7;border:2.5px solid var(--bg)}
 #avatar-file{display:none}
-.pname{font-family:'Syne',sans-serif;font-size:20px;font-weight:900;letter-spacing:-.4px}
-.phandle{color:var(--muted);font-size:12.5px;margin-top:2px}
-.pbio{font-size:13px;color:#94A3B8;margin-top:8px;line-height:1.55;background:none;border:none;width:100%;font-family:'DM Sans',sans-serif;resize:none;outline:none;cursor:text;padding:0}
-.pmeta{display:flex;gap:12px;margin-top:9px;flex-wrap:wrap}
-.pmeta-item{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.pname{font-family:'Syne',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.5px}
+.phandle{color:var(--muted);font-size:14px;margin-top:3px}
+.pbio{font-size:15px;color:#94A3B8;margin-top:10px;line-height:1.55;background:none;border:none;width:100%;font-family:'DM Sans',sans-serif;resize:none;outline:none;cursor:text;padding:0}
+.pmeta{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pmeta-item{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:4px}
 .pmeta-item strong{color:#CBD5E1}
 .rank-badge{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(245,200,66,.07));border:1px solid rgba(245,200,66,.3);border-radius:9px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--gold);margin-top:10px;width:fit-content}
 .profile-main{padding:16px 18px 40px}
@@ -814,7 +814,8 @@ function populateProfileUI(){
   else{avImg.style.display='none';document.getElementById('av-letter').style.display='block';}
   document.getElementById('phandle').textContent='@'+(u.handle||'you')+' · Member since '+(u.createdAt?new Date(u.createdAt).getFullYear():'2025');
   document.getElementById('pbio').value=u.bio||'';
-  document.getElementById('ploc').textContent=u.location||'—';
+  const locFlag = u.country ? (FLAGS[u.country] || '') : '';
+  document.getElementById('ploc').textContent = [locFlag, u.city, u.country].filter(Boolean).join(' ') || '—';
   document.getElementById('pschool').textContent=u.school||'—';
   const indEl=document.getElementById('pindustry');
   const indLabel = [u.industry, u.subIndustry].filter(Boolean).join(' · ');
