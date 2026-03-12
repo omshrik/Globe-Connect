@@ -817,11 +817,19 @@ async function doSignup(){
   const btn=document.getElementById('signup-btn');
   btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
   try{
-    const cred=await window._fb.createUserWithEmailAndPassword(window._fb.auth,email,pass);
-    await window._fb.updateProfile(cred.user,{displayName:name});
-    const handle=name.toLowerCase().replace(/\s+/g,'');
-    await window._fb.setDoc(window._fb.doc(window._fb.db,'users',cred.user.uid),{displayName:name,email,handle,bio:'',location:'',school:'',createdAt:new Date().toISOString()});
-    if(handle) await window._fb.setDoc(window._fb.doc(window._fb.db,'handles',handle.toLowerCase()),{uid:cred.user.uid,displayName:name,handle,email});
+    const {db,doc,getDoc,setDoc,auth,createUserWithEmailAndPassword,updateProfile}=window._fb;
+    // Find a unique handle
+    const base=name.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+    let handle=base; let suffix=1;
+    while(true){
+      const snap=await getDoc(doc(db,'handles',handle));
+      if(!snap.exists())break;
+      handle=base+suffix;suffix++;
+    }
+    const cred=await createUserWithEmailAndPassword(auth,email,pass);
+    await updateProfile(cred.user,{displayName:name});
+    await setDoc(doc(db,'users',cred.user.uid),{displayName:name,email,handle,bio:'',location:'',school:'',createdAt:new Date().toISOString()});
+    await setDoc(doc(db,'handles',handle),{uid:cred.user.uid,displayName:name,handle,email});
   }catch(e){showAuthErr(authErrMsg(e.code));btn.innerHTML='Create Account 🌍';btn.disabled=false;}
 }
 async function doGoogle(){
@@ -830,17 +838,26 @@ async function doGoogle(){
     const user=result.user;
     const ref=window._fb.doc(window._fb.db,'users',user.uid);
     const snap=await window._fb.getDoc(ref);
-    const handle=(user.displayName||'user').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
     if(!snap.exists()){
-      await window._fb.setDoc(ref,{displayName:user.displayName||'',email:user.email,handle,bio:'',location:'',school:'',createdAt:new Date().toISOString()});
+      // Generate unique handle
+      const {db,doc,getDoc,setDoc}=window._fb;
+      const base=(user.displayName||'user').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+      let handle=base; let suffix=1;
+      while(true){
+        const hSnap=await getDoc(doc(db,'handles',handle));
+        if(!hSnap.exists())break;
+        // If this handle belongs to THIS user already, it's fine
+        if(hSnap.data()?.uid===user.uid)break;
+        handle=base+suffix; suffix++;
+      }
+      await setDoc(ref,{displayName:user.displayName||'',email:user.email,handle,bio:'',location:'',school:'',createdAt:new Date().toISOString()});
+      await setDoc(doc(db,'handles',handle),{uid:user.uid,displayName:user.displayName||'',handle,city:'',country:'',industry:'',subIndustry:'',bio:'',photoURL:user.photoURL||''});
+    } else {
+      // Existing user — just re-register their handle
+      const {db,doc,setDoc}=window._fb;
+      const handle=snap.data().handle||'';
+      if(handle) await setDoc(doc(db,'handles',handle),{uid:user.uid,displayName:snap.data().displayName||'',handle,city:snap.data().city||'',country:snap.data().country||'',industry:snap.data().industry||'',subIndustry:snap.data().subIndustry||'',bio:snap.data().bio||'',photoURL:snap.data().photoURL||''},{merge:true});
     }
-    // Always register handle
-    await window._fb.setDoc(window._fb.doc(window._fb.db,'handles',handle),{
-      uid:user.uid,displayName:user.displayName||'',handle,
-      city:snap.data()?.city||'',country:snap.data()?.country||'',
-      industry:snap.data()?.industry||'',subIndustry:snap.data()?.subIndustry||'',
-      bio:snap.data()?.bio||'',photoURL:snap.data()?.photoURL||''
-    },{merge:true});
   }catch(e){showAuthErr(authErrMsg(e.code));}
 }
 async function doForgotPassword(){
@@ -931,7 +948,7 @@ window.loadUserData=async function(user){
         (h.city&&h.city!==c.city)||
         (h.country&&normalizeCountry(h.country)!==normalizeCountry(c.country))||
         (h.industry&&h.industry!==c.industry)||
-        (h.photoURL!==undefined&&h.photoURL!==c.photoURL);
+        (h.photoURL!==c.photoURL); // always compare photoURL regardless of empty
       if(changed){
         const updates={};
         if(h.displayName)updates.name=h.displayName;
@@ -940,7 +957,7 @@ window.loadUserData=async function(user){
         if(h.industry)updates.industry=h.industry;
         if(h.subIndustry)updates.subIndustry=h.subIndustry;
         if(h.bio)updates.bio=h.bio;
-        updates.photoURL=h.photoURL||'';
+        updates.photoURL=h.photoURL||''; // always write photoURL even if empty
         Object.assign(c,updates);
         if(c.firestoreId) updateDoc(doc(db,'users',user.uid,'connections',c.firestoreId),updates).catch(()=>{});
       }
@@ -1732,10 +1749,18 @@ async function saveProfile(){
   const email=document.getElementById('ep-email').value.trim();
   const phone=document.getElementById('ep-phone').value.trim();
   const instagram=document.getElementById('ep-instagram').value.trim().replace('@','');
-  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:handle||userProfile.handle,bio,location,city,state,country,school,industry,subIndustry,birthday,age,email,phone,instagram};
+  // Check if handle is already taken by someone else
+  const h=(handle||userProfile.handle||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+  if(h && handle && handle!==userProfile.handle){
+    const {db,doc,getDoc}=window._fb;
+    const hSnap=await getDoc(doc(db,'handles',h));
+    if(hSnap.exists() && hSnap.data().uid!==window.currentUser.uid){
+      showToast(`❌ @${h} is already taken — try another!`);return;
+    }
+  }
+  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:h||userProfile.handle,bio,location,city,state,country,school,industry,subIndustry,birthday,age,email,phone,instagram};
   await window._fb.setDoc(window._fb.doc(window._fb.db,'users',window.currentUser.uid),userProfile,{merge:true});
   // Register handle in global handles collection so others can find you
-  const h=(handle||userProfile.handle||'').toLowerCase();
   if(h) await window._fb.setDoc(window._fb.doc(window._fb.db,'handles',h),{
     uid:window.currentUser.uid,
     displayName:userProfile.displayName||name||'',
@@ -1798,6 +1823,9 @@ function handleAvatar(e){
         userProfile.photoURL=b64;
         if(window.currentUser){
           await window._fb.setDoc(window._fb.doc(window._fb.db,'users',window.currentUser.uid),{photoURL:b64},{merge:true});
+          // Also update handles collection so friends see new photo
+          const h=(userProfile.handle||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+          if(h) await window._fb.setDoc(window._fb.doc(window._fb.db,'handles',h),{photoURL:b64},{merge:true});
           showToast('✅ Profile photo saved!');
         }
       }catch(err){
