@@ -650,7 +650,7 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
       <div class="form-field" style="flex:0 0 90px"><label>🎂 Birthday</label><input type="text" id="epp-age" placeholder="MM/DD" style="text-align:center;" /></div>
       <div class="form-field" style="flex:0 0 70px"><label>🎈 Age</label><input type="text" id="epp-agenum" placeholder="e.g. 21" style="text-align:center;" /></div>
     </div>
-    <div class="form-field" id="epp-subindustry-wrap" style="display:none"><label>Sub-Industry</label><select id="epp-subindustry"><option value="">— Select —</option></select></div>
+    <div class="form-field" id="epp-subindustry-wrap"><label>Sub-Industry <span style="color:#475569;font-weight:400;">(optional)</span></label><select id="epp-subindustry"><option value="">— Select —</option></select></div>
     <div class="form-field"><label>Note</label><textarea id="epp-note" rows="3"></textarea></div>
     <div class="form-field"><label>Tags (comma-separated)</label><input type="text" id="epp-tags" /></div>
     <button type="button" onclick="toggleContactFields('epp')" id="epp-contact-toggle" style="width:100%;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);border-radius:9px;padding:9px;color:#64748B;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;transition:all .15s;">+ Contact Info (email, phone, Instagram)</button>
@@ -1486,18 +1486,26 @@ function updateAddSubIndustry(){
   const sel=document.getElementById('ap-subindustry');
   const key=Object.keys(SUB_INDUSTRIES).find(k=>ind===k||ind.includes(k))||'';
   const subs=SUB_INDUSTRIES[key]||[];
-  if(subs.length){wrap.style.display='block';sel.innerHTML='<option value="">— Select —</option>'+subs.map(s=>`<option>${s}</option>`).join('');}
+  if(subs.length){wrap.style.display='block';sel.innerHTML='<option value="">— Select —</option>'+subs.map(s=>`<option>${s}</option>`).join('')+'<option>Other</option>';}
   else{wrap.style.display='none';}
 }
 function updateEppSubIndustry(){
   const ind=document.getElementById('epp-industry').value;
-  const wrap=document.getElementById('epp-subindustry-wrap');
   const sel=document.getElementById('epp-subindustry');
   const key=Object.keys(SUB_INDUSTRIES).find(k=>ind===k||ind.includes(k))||'';
   const subs=SUB_INDUSTRIES[key]||[];
-  if(subs.length){wrap.style.display='block';sel.innerHTML='<option value="">— Select —</option>'+subs.map(s=>`<option>${s}</option>`).join('');}
-  else{wrap.style.display='none';}
+  if(subs.length){sel.innerHTML='<option value="">— Select —</option>'+subs.map(s=>`<option>${s}</option>`).join('')+'<option>Other</option>';}
+  else{sel.innerHTML='<option value="">— Pick an industry first —</option>';}
 }
+
+
+
+
+
+
+
+
+
 
 function updateProfileSubIndustry() {
   const ind = document.getElementById('ep-industry').value;
@@ -1553,10 +1561,10 @@ async function quickSearchHandle(){
         resultEl.innerHTML='<p style="color:#F5C842;font-size:12px;">That\'s you! 😄</p>';
         btn.textContent='Search';btn.disabled=false;return;
       }
-      // Also pre-fill the manual form below as fallback
-      document.getElementById('ap-name').value=u.displayName||'';
-      document.getElementById('ap-city').value=u.city||'';
-      document.getElementById('ap-country').value=u.country||'';
+      // Clear the manual form so it can't be submitted as a duplicate
+      document.getElementById('ap-name').value='';
+      document.getElementById('ap-city').value='';
+      document.getElementById('ap-country').value='';
       document.getElementById('ap-state').value='';
       if(u.industry){
         document.getElementById('ap-industry').value=u.industry||'';
@@ -1581,6 +1589,13 @@ async function quickSearchHandle(){
 }
 
 async function quickAddFromSearch(u, segId){
+  // Prevent duplicates — check if already added by linkedUid or name
+  const alreadyAdded=connections.find(c=>
+    (u.uid && c.linkedUid===u.uid) ||
+    (u.handle && (c.instagram||'').toLowerCase()===u.handle.toLowerCase()) ||
+    (c.name&&u.displayName&&c.name.toLowerCase()===u.displayName.toLowerCase())
+  );
+  if(alreadyAdded){showToast(`⚠️ ${u.displayName} is already in your connections!`);closeModal('add-modal');return;}
   // Geocode city
   let lat=0,lng=0;
   if(u.city){
