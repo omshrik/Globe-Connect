@@ -841,6 +841,16 @@ function initMap(){
   map.on('load',()=>{
     map.resize();
     setTimeout(()=>map.resize(),200);
+    setTimeout(()=>{
+      // Trick: briefly activate people panel then come back to force full map render
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('panel-people').classList.add('active');
+      requestAnimationFrame(()=>{
+        document.getElementById('panel-people').classList.remove('active');
+        document.getElementById('panel-map').classList.add('active');
+        map.resize();
+      });
+    },100);
     map.setFog({color:'rgb(7,9,15)','high-color':'rgb(15,25,55)','horizon-blend':.02,'space-color':'rgb(3,5,12)','star-intensity':.7});
     renderMarkers();renderSegBar();renderPeople();renderBadges();showReminders();
     if(navigator.geolocation){
