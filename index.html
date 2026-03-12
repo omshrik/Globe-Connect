@@ -87,7 +87,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .btn-ghost:hover{background:rgba(255,255,255,.13)}
 .btn-primary{background:linear-gradient(135deg,#6366F1,#818CF8);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.3)}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.45)}
-.tabs{display:flex;gap:3px;padding:10px 20px 0;flex-shrink:0}
+.tabs{display:none;gap:3px;padding:10px 20px 0;flex-shrink:0}
 
 /* ── REMINDER BANNER ── */
 #reminder-banner{display:none;align-items:center;gap:10px;padding:9px 16px;margin:8px 20px 0;border-radius:12px;font-size:13px;flex-shrink:0;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
@@ -111,7 +111,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 .seg-bar{display:flex;gap:6px;padding:9px 20px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 .seg-bar::-webkit-scrollbar{display:none}
 .seg-btn{display:inline-flex;align-items:center;gap:4px;border-radius:7px;padding:4px 11px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#64748B}
-#mapbox-wrap{flex:1;margin:0 20px 18px;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.09);position:relative;min-height:0}
+#mapbox-wrap{flex:1;margin:0;border-radius:0;overflow:hidden;border:none;position:relative;min-height:0}
 #map{width:100%;height:100%}
 .mapboxgl-popup-content{background:#0F172A!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;padding:0!important;box-shadow:0 20px 60px rgba(0,0,0,.7)!important;min-width:220px}
 .mapboxgl-popup-tip{display:none!important}
@@ -1663,6 +1663,8 @@ function switchTab(tab,tabEl){
   const navId={map:'nav-map',people:'nav-people',badges:'nav-badges',profile:'nav-profile',ai:'nav-ai'};
   document.getElementById(navId[tab])?.classList.add('active');
   document.getElementById('panel-'+tab)?.classList.add('active');
+  // Hide top tabs row on map — give map full space
+  document.querySelector('.tabs').style.display = tab==='map' ? 'none' : 'flex';
   if(tab==='map')setTimeout(()=>map&&map.resize(),40);
   if(tab==='people')renderPeople();
   if(tab==='badges')renderBadges();
