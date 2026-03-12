@@ -31,6 +31,10 @@ onAuthStateChanged(auth, async (user) => {
     await window.loadUserData(user);
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'flex';
+    // Go fullscreen on login
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
   } else {
     window.currentUser = null;
     document.getElementById('auth-screen').style.display = 'flex';
@@ -347,9 +351,12 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
 <!-- APP SCREEN -->
 <div id="app-screen">
 <header>
-  <div class="logo" onclick="switchTab('map')">
-    <div class="logo-icon">🌐</div>
-    <div><div class="logo-name">GlobeConnect</div><div class="logo-sub" id="hdr-sub">0 people · 0 countries</div></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button id="fs-btn" onclick="toggleFullscreen()" title="Fullscreen" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex-shrink:0;color:#64748B;transition:all .15s;" onmouseover="this.style.background='rgba(255,255,255,.13)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">⛶</button>
+    <div class="logo" onclick="switchTab('map')">
+      <div class="logo-icon">🌐</div>
+      <div><div class="logo-name">GlobeConnect</div><div class="logo-sub" id="hdr-sub">0 people · 0 countries</div></div>
+    </div>
   </div>
   <div class="header-actions">
     <button class="btn btn-ghost" onclick="openModal('seg-modal')">🏷️ Segments</button>
@@ -429,7 +436,7 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
           <div class="pmeta-item">💼 <strong id="pindustry" style="display:none"></strong></div>
           <div class="pmeta-item">🎓 <strong id="pschool">—</strong></div>
         </div>
-        <div class="rank-badge">🔥 Globetrotter · Level 1</div>
+        <div class="rank-badge" id="rank-badge-el">🌱 Rookie</div>
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="openModal('edit-modal')">✏️ Edit Profile</button>
           <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="shareProfile()">📤 Share</button>
@@ -442,7 +449,7 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
           <div class="p-stat" style="--line:linear-gradient(90deg,#FFD700,#FFA500)"><div class="p-stat-num" id="ps-bdg">0</div><div class="p-stat-lbl">Badges</div></div>
         </div>
         <div class="level-card">
-          <div class="level-hdr"><div class="level-title">🚀 Your Journey</div><div class="level-lbl">Globetrotter</div></div>
+          <div class="level-hdr"><div class="level-title">🚀 Your Journey</div><div class="level-lbl" id="lvl-lbl">Rookie</div></div>
           <div class="level-track"><div class="level-fill" id="lvl-fill"></div></div>
           <div class="level-sub"><span id="lvl-left">0 connections</span><span id="lvl-right">10 to reach <strong style="color:#A5B4FC">Networker</strong></span></div>
         </div>
@@ -536,10 +543,11 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     </div>
     <div class="form-field"><label>Segment</label><div class="seg-pills" id="ap-pills"></div></div>
     <div style="display:flex;gap:10px;">
-      <div class="form-field" style="flex:1"><label>Industry</label><select id="ap-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
+      <div class="form-field" style="flex:1"><label>Industry</label><select id="ap-industry" onchange="updateAddSubIndustry()"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
       <div class="form-field" style="flex:0 0 90px"><label>🎂 Birthday</label><input type="text" id="ap-age" placeholder="MM/DD" style="text-align:center;" /></div>
       <div class="form-field" style="flex:0 0 70px"><label>🎈 Age</label><input type="text" id="ap-agenum" placeholder="e.g. 21" style="text-align:center;" /></div>
     </div>
+    <div class="form-field" id="ap-subindustry-wrap" style="display:none"><label>Sub-Industry</label><select id="ap-subindustry"><option value="">— Select —</option></select></div>
     <div class="form-field"><label>Note (how you met)</label><textarea id="ap-note" rows="2" placeholder="Met at orientation, conference..."></textarea></div>
     <div class="form-field"><label>Tags (comma-separated)</label><input type="text" id="ap-tags" placeholder="Tech, Soccer, Music" /></div>
     <!-- Contact info toggle -->
@@ -565,10 +573,11 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     </div>
     <div class="form-field"><label>Move to Segment</label><div class="seg-pills" id="epp-pills"></div></div>
     <div style="display:flex;gap:10px;">
-      <div class="form-field" style="flex:1"><label>Industry</label><select id="epp-industry"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
+      <div class="form-field" style="flex:1"><label>Industry</label><select id="epp-industry" onchange="updateEppSubIndustry()"><option value="">— Select —</option><option>Technology</option><option>Finance</option><option>Healthcare</option><option>Education</option><option>Media & Entertainment</option><option>Real Estate</option><option>Consulting</option><option>Law</option><option>Engineering</option><option>Design & Creative</option><option>Sports & Fitness</option><option>Government & Politics</option><option>Nonprofit</option><option>Hospitality & Tourism</option><option>Retail & E-commerce</option><option>Other</option></select></div>
       <div class="form-field" style="flex:0 0 90px"><label>🎂 Birthday</label><input type="text" id="epp-age" placeholder="MM/DD" style="text-align:center;" /></div>
       <div class="form-field" style="flex:0 0 70px"><label>🎈 Age</label><input type="text" id="epp-agenum" placeholder="e.g. 21" style="text-align:center;" /></div>
     </div>
+    <div class="form-field" id="epp-subindustry-wrap" style="display:none"><label>Sub-Industry</label><select id="epp-subindustry"><option value="">— Select —</option></select></div>
     <div class="form-field"><label>Note</label><textarea id="epp-note" rows="3"></textarea></div>
     <div class="form-field"><label>Tags (comma-separated)</label><input type="text" id="epp-tags" /></div>
     <button type="button" onclick="toggleContactFields('epp')" id="epp-contact-toggle" style="width:100%;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);border-radius:9px;padding:9px;color:#64748B;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;transition:all .15s;">+ Contact Info (email, phone, Instagram)</button>
@@ -864,13 +873,58 @@ function renderMarkers(){
   });
 }
 
+function getPersonBadges(c){
+  const badges=[];
+  const today=new Date();
+  // Known you long time
+  if(c.added){
+    const days=Math.floor((today-new Date(c.added))/(1000*60*60*24));
+    if(days>=365) badges.push({icon:'🎖️',label:'1+ Year Friend'});
+    else if(days>=180) badges.push({icon:'🤝',label:'6 Month Friend'});
+    else if(days>=30) badges.push({icon:'✨',label:'New Friend'});
+  }
+  // Birthday coming up
+  if(c.age){
+    const parts=c.age.split('/');
+    if(parts.length===2){
+      const bMonth=parseInt(parts[0]),bDay=parseInt(parts[1]);
+      const thisYearBday=new Date(today.getFullYear(),bMonth-1,bDay);
+      const diff=Math.ceil((thisYearBday-today)/(1000*60*60*24));
+      const absDiff=diff<0?diff+365:diff;
+      if(absDiff===0) badges.push({icon:'🎂',label:"Birthday Today!"});
+      else if(absDiff<=7) badges.push({icon:'🎁',label:`Birthday in ${absDiff}d`});
+    }
+  }
+  // Industry badges
+  if(c.industry){
+    const ind=c.industry.toLowerCase();
+    if(ind.includes('tech')||ind.includes('engineer')) badges.push({icon:'💻',label:'Tech'});
+    else if(ind.includes('finance')||ind.includes('invest')) badges.push({icon:'📈',label:'Finance'});
+    else if(ind.includes('real estate')) badges.push({icon:'🏠',label:'Real Estate'});
+    else if(ind.includes('health')) badges.push({icon:'🏥',label:'Healthcare'});
+    else if(ind.includes('design')||ind.includes('creative')) badges.push({icon:'🎨',label:'Creative'});
+    else if(ind.includes('sport')||ind.includes('fitness')) badges.push({icon:'⚽',label:'Sports'});
+    else if(ind.includes('music')) badges.push({icon:'🎵',label:'Music'});
+    else if(ind.includes('media')||ind.includes('entertain')) badges.push({icon:'🎬',label:'Media'});
+    else if(ind.includes('law')) badges.push({icon:'⚖️',label:'Law'});
+    else if(ind.includes('edu')) badges.push({icon:'🎓',label:'Education'});
+  }
+  // Tags → badges
+  (c.tags||[]).slice(0,2).forEach(t=>badges.push({icon:'🏷️',label:t}));
+  return badges.slice(0,4); // max 4
+}
+
 function showPopup(c,el){
   if(activePopup){activePopup.remove();activePopup=null;}
   Object.values(markers).forEach(m=>m.el.classList.remove('selected'));
   el.classList.add('selected');
   const seg=getSeg(c.segment);
   const tags=(c.tags||[]).map(t=>`<span class="popup-tag">${t}</span>`).join('');
-  const popup=new mapboxgl.Popup({offset:18,closeButton:true,maxWidth:'260px'})
+  const badges=getPersonBadges(c);
+  const badgesHTML=badges.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.07);">
+    ${badges.map(b=>`<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:3px 8px;font-size:11px;font-weight:600;color:#CBD5E1;">${b.icon} ${b.label}</span>`).join('')}
+  </div>`:'';
+  const popup=new mapboxgl.Popup({offset:18,closeButton:true,maxWidth:'280px'})
     .setLngLat([c.lng,c.lat])
     .setHTML(`<div class="popup-inner">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -880,10 +934,11 @@ function showPopup(c,el){
       ${c.note?`<div class="popup-note">"${c.note}"</div>`:''}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
         <span style="display:inline-flex;align-items:center;gap:4px;background:${seg.color}22;color:${seg.color};font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">${seg.emoji} ${seg.label}</span>
-        ${c.industry?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,.15);color:#00C9A7;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">💼 ${c.industry}</span>`:''}
+        ${c.industry?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,.15);color:#00C9A7;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">💼 ${[c.industry,c.subIndustry].filter(Boolean).join(' · ')}</span>`:''}
         ${c.age?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,200,66,.12);color:#F5C842;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">🎂 ${c.age}${c.agenum?' · '+c.agenum+' yrs':''}</span>`:c.agenum?`<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,200,66,.12);color:#F5C842;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px;">🎈 Age ${c.agenum}</span>`:''}
       </div>
       ${tags?`<div class="popup-tags">${tags}</div>`:''}
+      ${badgesHTML}
       ${(c.email||c.phone||c.instagram)?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:5px;">
         ${c.email?`<a href="mailto:${c.email}" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8;text-decoration:none;">📧 <span>${c.email}</span></a>`:''}
         ${c.phone?`<a href="tel:${c.phone}" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8;text-decoration:none;">📱 <span>${c.phone}</span></a>`:''}
@@ -949,17 +1004,40 @@ function flyTo(id){
 }
 
 // ── BADGES ──
+// ── RANK SYSTEM ──
+// Connection ranks: Rookie(1), Networker(20), Globetrotter(100)
+// Country ranks (PRESTIGE — override connection rank): Mr. Worldwide(10), International Kid(20), Globetrotter country edition(50)
+function getRank(connCount, ctryCount){
+  if(ctryCount>=50) return {name:'Globetrotter',icon:'🌍',color:'#F5C842',prestige:true};
+  if(ctryCount>=20) return {name:'International Kid',icon:'✈️',color:'#00C9A7',prestige:true};
+  if(ctryCount>=10) return {name:'Mr. Worldwide',icon:'🌐',color:'#A29BFE',prestige:true};
+  if(connCount>=100) return {name:'Globetrotter',icon:'🌍',color:'#F5C842',prestige:false};
+  if(connCount>=20) return {name:'Networker',icon:'🤝',color:'#00C9A7',prestige:false};
+  if(connCount>=1) return {name:'Rookie',icon:'🌱',color:'#6366F1',prestige:false};
+  return {name:'New Here',icon:'👋',color:'#64748B',prestige:false};
+}
+
 function renderBadges(){
-  const ctries=[...new Set(connections.map(c=>c.country))].length;
+  const ctryCount=[...new Set(connections.map(c=>c.country))].length;
+  const connCount=connections.length;
   const defs=[
-    {icon:'🌍',label:'First Connection',desc:'Added your first friend',earned:connections.length>=1},
-    {icon:'🤝',label:'Networker',desc:'10 connections made',earned:connections.length>=10},
-    {icon:'✈️',label:'Globetrotter',desc:'Friends in 5 countries',earned:ctries>=5},
-    {icon:'🌐',label:'Superconnector',desc:'100 connections',earned:connections.length>=100},
-    {icon:'🏆',label:'Mr. Worldwide',desc:'Friends in 20 countries',earned:ctries>=20},
-    {icon:'🔥',label:'On Fire',desc:'3 new connections this week',earned:false},
+    // Connection ranks
+    {icon:'🌱',label:'Rookie',desc:'1 connection',earned:connCount>=1,prestige:false},
+    {icon:'🤝',label:'Networker',desc:'20 connections',earned:connCount>=20,prestige:false},
+    {icon:'🌍',label:'Globetrotter',desc:'100 connections',earned:connCount>=100,prestige:false},
+    // Prestige country ranks
+    {icon:'🌐',label:'Mr. Worldwide',desc:'Friends in 10 countries',earned:ctryCount>=10,prestige:true},
+    {icon:'✈️',label:'International Kid',desc:'Friends in 20 countries',earned:ctryCount>=20,prestige:true},
+    {icon:'🏆',label:'Globetrotter (Elite)',desc:'Friends in 50 countries',earned:ctryCount>=50,prestige:true},
   ];
-  document.getElementById('badges-grid').innerHTML=defs.map(b=>`<div class="badge-card ${b.earned?'earned':''}"><div class="badge-icon">${b.icon}</div><div class="badge-label">${b.label}</div><div class="badge-desc">${b.desc}</div>${b.earned?'<div class="badge-earned">✓ Earned</div>':''}</div>`).join('');
+  document.getElementById('badges-grid').innerHTML=defs.map(b=>`
+    <div class="badge-card ${b.earned?'earned':''}" style="${b.prestige&&b.earned?'background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(99,102,241,.1));border-color:rgba(245,200,66,.4);':''}">
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-label">${b.label}</div>
+      <div class="badge-desc">${b.desc}</div>
+      ${b.prestige?`<div style="font-size:10px;font-weight:800;margin-top:4px;color:${b.earned?'#F5C842':'#475569'}">★ PRESTIGE</div>`:''}
+      ${b.earned?'<div class="badge-earned">✓ Earned</div>':''}
+    </div>`).join('');
 }
 
 // ── PROFILE MAP ──
@@ -981,15 +1059,32 @@ function initProfileMap(){
 
 function renderProfileData(){
   const ctries=[...new Set(connections.map(c=>c.country))];
-  const earnedCount=[connections.length>=1,connections.length>=10,ctries.length>=5].filter(Boolean).length;
-  document.getElementById('ps-conn').textContent=connections.length;
-  document.getElementById('ps-ctry').textContent=ctries.length;
-  document.getElementById('ps-bdg').textContent=earnedCount;
-  document.getElementById('lvl-left').textContent=`${connections.length} connections`;
-  document.getElementById('lvl-right').innerHTML=`${Math.max(0,10-connections.length)} more to reach <strong style="color:#A5B4FC">Networker</strong>`;
-  const pct=Math.min(100,(connections.length/10)*100);
-  document.getElementById('lvl-fill').style.width=pct+'%';
-  const total=connections.length;
+  const ctryCount=ctries.length;
+  const connCount=connections.length;
+  const rank=getRank(connCount,ctryCount);
+  const earnedBadges=[connCount>=1,connCount>=20,connCount>=100,ctryCount>=10,ctryCount>=20,ctryCount>=50].filter(Boolean).length;
+  document.getElementById('ps-conn').textContent=connCount;
+  document.getElementById('ps-ctry').textContent=ctryCount;
+  document.getElementById('ps-bdg').textContent=earnedBadges;
+  // Update rank badge
+  document.getElementById('rank-badge-el').textContent=`${rank.icon} ${rank.name}${rank.prestige?' ★':''}`;
+  document.getElementById('rank-badge-el').style.color=rank.color;
+  document.getElementById('rank-badge-el').style.borderColor=rank.color+'55';
+  document.getElementById('rank-badge-el').style.background=rank.color+'18';
+  // Level bar — show progress to next rank
+  let lvlLeft='', lvlRight='', pct=0;
+  if(ctryCount>=50){lvlLeft=`${ctryCount} countries`;lvlRight='🏆 Max Prestige';pct=100;}
+  else if(ctryCount>=20){lvlLeft=`${ctryCount}/50 countries`;lvlRight=`${50-ctryCount} countries to Globetrotter Elite ★`;pct=(ctryCount/50)*100;}
+  else if(ctryCount>=10){lvlLeft=`${ctryCount}/20 countries`;lvlRight=`${20-ctryCount} countries to International Kid ★`;pct=(ctryCount/20)*100;}
+  else if(connCount>=100){lvlLeft=`${ctryCount}/10 countries`;lvlRight=`${10-ctryCount} countries to Mr. Worldwide ★`;pct=(ctryCount/10)*100;}
+  else if(connCount>=20){lvlLeft=`${connCount}/100 connections`;lvlRight=`${100-connCount} more to Globetrotter`;pct=(connCount/100)*100;}
+  else if(connCount>=1){lvlLeft=`${connCount}/20 connections`;lvlRight=`${20-connCount} more to Networker`;pct=(connCount/20)*100;}
+  else{lvlLeft='0 connections';lvlRight='Add 1 to become Rookie';pct=0;}
+  document.getElementById('lvl-left').textContent=lvlLeft;
+  document.getElementById('lvl-right').innerHTML=lvlRight;
+  document.getElementById('lvl-fill').style.width=Math.min(100,pct)+'%';
+  document.getElementById('lvl-lbl').textContent=rank.name;
+  const total=connCount;
   document.getElementById('prof-seg-bars').innerHTML=segments.map(seg=>{
     const cnt=connections.filter(c=>c.segment===seg.id).length;const p=total?(cnt/total)*100:0;
     return `<div class="seg-bar-row"><div class="seg-bar-label" style="color:${seg.color}">${seg.emoji} ${seg.label}</div><div class="seg-bar-track"><div class="seg-bar-fill" style="background:${seg.color};width:${p}%"></div></div><div class="seg-bar-cnt">${cnt}</div></div>`;
@@ -1032,13 +1127,14 @@ function renderProfileData(){
   });
   document.getElementById('ctry-chips').innerHTML = chipsHTML;
   const milestones=[
-    {icon:'🌱',title:'First Connection',desc:`${connections.length}/1 connections`,earned:connections.length>=1},
-    {icon:'🤝',title:'Networker',desc:`${connections.length}/10 connections`,earned:connections.length>=10},
-    {icon:'✈️',title:'Globetrotter',desc:`${ctries.length}/5 countries`,earned:ctries.length>=5},
-    {icon:'🌐',title:'Superconnector',desc:`${connections.length}/100 connections`,earned:connections.length>=100},
-    {icon:'🏆',title:'Mr. Worldwide',desc:`${ctries.length}/20 countries`,earned:ctries.length>=20},
+    {icon:'🌱',title:'Rookie',desc:`${connCount}/1 connection`,earned:connCount>=1,prestige:false},
+    {icon:'🤝',title:'Networker',desc:`${connCount}/20 connections`,earned:connCount>=20,prestige:false},
+    {icon:'🌍',title:'Globetrotter',desc:`${connCount}/100 connections`,earned:connCount>=100,prestige:false},
+    {icon:'🌐',title:'Mr. Worldwide ★',desc:`${ctryCount}/10 countries`,earned:ctryCount>=10,prestige:true},
+    {icon:'✈️',title:'International Kid ★',desc:`${ctryCount}/20 countries`,earned:ctryCount>=20,prestige:true},
+    {icon:'🏆',title:'Globetrotter Elite ★',desc:`${ctryCount}/50 countries`,earned:ctryCount>=50,prestige:true},
   ];
-  document.getElementById('milestone-list').innerHTML=milestones.map(m=>`<div class="milestone-item"><div class="m-dot ${m.earned?'earned':'locked'}">${m.icon}</div><div class="m-body"><div class="m-title" style="color:${m.earned?'#E2E8F0':'#64748B'}">${m.title}</div><div class="m-desc">${m.desc}</div></div></div>`).join('');
+  document.getElementById('milestone-list').innerHTML=milestones.map(m=>`<div class="milestone-item"><div class="m-dot ${m.earned?'earned':'locked'}">${m.icon}</div><div class="m-body"><div class="m-title" style="color:${m.earned?(m.prestige?'#F5C842':'#E2E8F0'):'#64748B'}">${m.title}</div><div class="m-desc">${m.desc}</div></div></div>`).join('');
   updateHeaderSub();
 }
 
@@ -1071,6 +1167,7 @@ async function addPerson(){
   const note=document.getElementById('ap-note').value.trim();
   const tags=document.getElementById('ap-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const industry=document.getElementById('ap-industry').value;
+  const subIndustry=document.getElementById('ap-subindustry')?.value||'';
   const age=document.getElementById('ap-age').value.trim();
   const agenum=document.getElementById('ap-agenum').value.trim();
   const email=document.getElementById('ap-email').value.trim();
@@ -1079,7 +1176,7 @@ async function addPerson(){
   if(!name||!city){showToast('⚠️ Name and city are required!');return;}
   showToast('📍 Finding location...');
   const geo=await geocodePlace(city,state,country);
-  const cData={id:Date.now().toString(),name,city,state,country:country||'Unknown',lat:geo.lat,lng:geo.lng,segment:selSeg,note,tags,industry,age,agenum,email,phone,instagram,added:new Date().toISOString()};
+  const cData={id:Date.now().toString(),name,city,state,country:country||'Unknown',lat:geo.lat,lng:geo.lng,segment:selSeg,note,tags,industry,subIndustry,age,agenum,email,phone,instagram,added:new Date().toISOString()};
   const {db,collection,addDoc}=window._fb;
   try{
     const ref=await addDoc(collection(db,'users',window.currentUser.uid,'connections'),cData);
@@ -1088,6 +1185,7 @@ async function addPerson(){
   connections.push(cData);
   ['ap-name','ap-city','ap-state','ap-country','ap-note','ap-tags','ap-age','ap-agenum','ap-email','ap-phone','ap-instagram'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ap-industry').value='';
+  document.getElementById('ap-subindustry-wrap').style.display='none';
   document.getElementById('ap-contact-fields').style.display='none';
   document.getElementById('ap-contact-toggle').textContent='+ Add Contact Info (email, phone, Instagram)';
   document.getElementById('ap-contact-toggle').style.color='#64748B';
@@ -1187,6 +1285,25 @@ const SUB_INDUSTRIES = {
   'Government': ['Federal','State/Local','Policy','Military','Nonprofit','International Relations'],
   'Other': ['Freelance','Student','Research','Academia','Non-profit','Other']
 };
+
+function updateAddSubIndustry(){
+  const ind=document.getElementById('ap-industry').value;
+  const wrap=document.getElementById('ap-subindustry-wrap');
+  const sel=document.getElementById('ap-subindustry');
+  const key=Object.keys(SUB_INDUSTRIES).find(k=>ind===k||ind.includes(k))||'';
+  const subs=SUB_INDUSTRIES[key]||[];
+  if(subs.length){wrap.style.display='block';sel.innerHTML='<option value="">— Select —</option>'+subs.map(s=>`<option>${s}</option>`).join('');}
+  else{wrap.style.display='none';}
+}
+function updateEppSubIndustry(){
+  const ind=document.getElementById('epp-industry').value;
+  const wrap=document.getElementById('epp-subindustry-wrap');
+  const sel=document.getElementById('epp-subindustry');
+  const key=Object.keys(SUB_INDUSTRIES).find(k=>ind===k||ind.includes(k))||'';
+  const subs=SUB_INDUSTRIES[key]||[];
+  if(subs.length){wrap.style.display='block';sel.innerHTML='<option value="">— Select —</option>'+subs.map(s=>`<option>${s}</option>`).join('');}
+  else{wrap.style.display='none';}
+}
 
 function updateProfileSubIndustry() {
   const ind = document.getElementById('ep-industry').value;
@@ -1321,6 +1438,8 @@ function openEditPerson(id){
   document.getElementById('epp-note').value=c.note||'';
   document.getElementById('epp-tags').value=(c.tags||[]).join(', ');
   document.getElementById('epp-industry').value=c.industry||'';
+  updateEppSubIndustry();
+  if(c.subIndustry) setTimeout(()=>{document.getElementById('epp-subindustry').value=c.subIndustry||'';},50);
   document.getElementById('epp-age').value=c.age||'';
   document.getElementById('epp-agenum').value=c.agenum||'';
   document.getElementById('epp-email').value=c.email||'';
@@ -1355,6 +1474,7 @@ async function savePersonEdit(){
   const note=document.getElementById('epp-note').value.trim();
   const tags=document.getElementById('epp-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const industry=document.getElementById('epp-industry').value;
+  const subIndustry=document.getElementById('epp-subindustry')?.value||'';
   const age=document.getElementById('epp-age').value.trim();
   const agenum=document.getElementById('epp-agenum').value.trim();
   const emailEl=document.getElementById('epp-email');
@@ -1364,7 +1484,7 @@ async function savePersonEdit(){
   const phone=phoneEl?phoneEl.value.trim():'';
   const instagram=igEl?igEl.value.trim().replace(/^@/,''):'';
   if(!name){showToast('\u26a0\ufe0f Name is required!');return;}
-  const updated={...c,name,city:city||c.city,state:state||c.state,country:country||c.country,segment:eppSeg,note,tags,industry,age,agenum,email,phone,instagram};
+  const updated={...c,name,city:city||c.city,state:state||c.state,country:country||c.country,segment:eppSeg,note,tags,industry,subIndustry,age,agenum,email,phone,instagram};
   connections=connections.map(x=>x.id===editPersonId?updated:x);
   try{
     const {db,doc,updateDoc,addDoc,collection}=window._fb;
@@ -1502,6 +1622,23 @@ function shareProfile(){
   navigator.clipboard.writeText(url).catch(()=>{});
   showToast('🔗 Profile link copied! Send it to anyone.');
 }
+function toggleFullscreen(){
+  const el=document.documentElement;
+  const btn=document.getElementById('fs-btn');
+  if(!document.fullscreenElement && !document.webkitFullscreenElement){
+    if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    if(btn) btn.textContent='⛶';
+  } else {
+    if(document.exitFullscreen) document.exitFullscreen();
+    else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    if(btn) btn.textContent='⛶';
+  }
+}
+document.addEventListener('fullscreenchange',()=>{
+  const btn=document.getElementById('fs-btn');
+  if(btn) btn.textContent=document.fullscreenElement?'✕':'⛶';
+});
 function copyRef(){
   const code=document.getElementById('ref-code-card')?.textContent||'@globeconnect';
   navigator.clipboard.writeText(code).catch(()=>{});showToast('🔗 Referral code copied!');
