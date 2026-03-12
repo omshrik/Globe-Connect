@@ -551,6 +551,16 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
 <div class="overlay" id="add-modal" onclick="if(event.target===this)closeModal('add-modal')">
   <div class="modal">
     <div class="modal-hdr"><div class="modal-title">📍 Add a Connection</div><button class="modal-close" onclick="closeModal('add-modal')">✕</button></div>
+    <!-- Username search -->
+    <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;color:#A5B4FC;margin-bottom:8px;">🔍 Find by @username</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="quick-search-input" placeholder="e.g. krishpatel" oninput="this.value=this.value.replace('@','')" onkeydown="if(event.key==='Enter')quickSearchHandle()" style="flex:1;margin:0;" />
+        <button class="btn btn-primary" onclick="quickSearchHandle()" id="quick-search-btn" style="padding:8px 14px;white-space:nowrap;">Search</button>
+      </div>
+      <div id="quick-search-result" style="margin-top:8px;"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;"><div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div><span style="font-size:11px;color:#475569;font-weight:600;">OR ADD MANUALLY</span><div style="flex:1;height:1px;background:rgba(255,255,255,.07);"></div></div>
     <div class="form-field"><label>Full Name *</label><input type="text" id="ap-name" placeholder="e.g. Sofia Rossi" /></div>
     <div class="form-field"><label>City *</label><input type="text" id="ap-city" placeholder="e.g. Milan" /></div>
     <div style="display:flex;gap:10px;">
@@ -1372,6 +1382,48 @@ function openEditModal(){
   if(userProfile.subIndustry) document.getElementById('ep-subindustry').value=userProfile.subIndustry||'';
   document.getElementById('edit-modal').classList.add('open');
 }
+async function quickSearchHandle(){
+  const input=document.getElementById('quick-search-input');
+  const handle=input.value.trim().toLowerCase().replace('@','');
+  const resultEl=document.getElementById('quick-search-result');
+  const btn=document.getElementById('quick-search-btn');
+  if(!handle){resultEl.innerHTML='<p style="color:#F5C842;font-size:12px;">Enter a username first.</p>';return;}
+  btn.textContent='...';btn.disabled=true;
+  resultEl.innerHTML='<p style="color:#64748B;font-size:12px;">Searching...</p>';
+  try{
+    const {db,doc,getDoc}=window._fb;
+    const snap=await getDoc(doc(db,'handles',handle));
+    if(!snap.exists()){
+      resultEl.innerHTML='<p style="color:#F87171;font-size:12px;">❌ No user found with @'+handle+'</p>';
+    } else {
+      const u=snap.data();
+      if(u.uid===window.currentUser?.uid){
+        resultEl.innerHTML='<p style="color:#F5C842;font-size:12px;">That\'s you! 😄</p>';
+        btn.textContent='Search';btn.disabled=false;return;
+      }
+      // Pre-fill the form below
+      document.getElementById('ap-name').value=u.displayName||'';
+      document.getElementById('ap-city').value=u.city||'';
+      document.getElementById('ap-country').value=u.country||'';
+      document.getElementById('ap-state').value='';
+      if(u.industry){
+        document.getElementById('ap-industry').value=u.industry||'';
+        updateAddSubIndustry();
+        setTimeout(()=>{if(u.subIndustry)document.getElementById('ap-subindustry').value=u.subIndustry||'';},50);
+      }
+      const flag=FLAGS[u.country]||'';
+      resultEl.innerHTML=`<div style="display:flex;align-items:center;gap:8px;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.25);border-radius:9px;padding:9px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#00C9A7);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;font-family:'Syne',sans-serif;overflow:hidden;flex-shrink:0;">${u.photoURL?`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;">`:(u.displayName||'?').charAt(0).toUpperCase()}</div>
+        <div><div style="font-size:13px;font-weight:700;color:#E2E8F0;">${u.displayName||'Unknown'} ${flag}</div><div style="font-size:11px;color:#64748B;">@${u.handle}${u.city?' · '+u.city:''}</div></div>
+        <div style="margin-left:auto;font-size:11px;color:#00C9A7;font-weight:700;">✓ Form filled!</div>
+      </div>`;
+    }
+  }catch(err){
+    resultEl.innerHTML='<p style="color:#F87171;font-size:12px;">❌ Error. Try again.</p>';
+  }
+  btn.textContent='Search';btn.disabled=false;
+}
+
 async function searchByHandle(){
   const input=document.getElementById('search-handle-input');
   const handle=input.value.trim().toLowerCase().replace('@','');
