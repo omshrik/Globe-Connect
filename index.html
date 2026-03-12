@@ -405,6 +405,25 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
         <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">Connections</div></div>
         <div class="stat-card"><div class="stat-num" id="st-countries">0</div><div class="stat-lbl">Countries</div></div>
       </div>
+      <!-- PERSON OF THE DAY SPOTLIGHT -->
+      <div id="potd-people" style="display:none;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:#64748B;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">✨ Person of the Day</div>
+        <div id="potd-people-inner" style="background:linear-gradient(135deg,rgba(99,102,241,.13),rgba(0,201,167,.08));border:1px solid rgba(99,102,241,.3);border-radius:14px;padding:14px;cursor:pointer;" onclick="switchTab('profile');setTimeout(()=>document.getElementById('potd-card').scrollIntoView({behavior:'smooth'}),300)">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="potd-p-avatar" style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#6366F1,#00C9A7);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;overflow:hidden;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div id="potd-p-name" style="font-size:15px;font-weight:800;color:#E2E8F0;font-family:'Plus Jakarta Sans',sans-serif;"></div>
+              <div id="potd-p-meta" style="font-size:12px;color:#64748B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            </div>
+            <div id="potd-p-flag" style="font-size:30px;flex-shrink:0;"></div>
+          </div>
+          <div id="potd-p-msg" style="font-size:12.5px;color:#94A3B8;line-height:1.6;margin-top:10px;font-style:italic;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+            <div id="potd-p-tag" style="font-size:11px;font-weight:700;color:#A5B4FC;background:rgba(99,102,241,.15);border-radius:6px;padding:3px 8px;"></div>
+            <button onclick="event.stopPropagation();loadPersonOfDay(true)" style="background:none;border:none;color:#475569;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;">🔄 Shuffle</button>
+          </div>
+        </div>
+      </div>
       <input class="search-input" type="text" id="search" placeholder="🔍  Search people, cities, countries..." oninput="renderPeople()" />
       <div id="people-list"></div>
     </div>
@@ -425,14 +444,17 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
     <div class="profile-panel">
       <div class="profile-hero"><div id="profile-map"></div><div class="hero-fade"></div></div>
       <div class="profile-card">
-        <div class="avatar-wrap">
-          <div class="avatar" id="av-el" onclick="document.getElementById('avatar-file').click()">
-            <img id="av-img" /><span id="av-letter">?</span>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
+          <div class="avatar-wrap">
+            <div class="avatar" id="av-el" onclick="document.getElementById('avatar-file').click()">
+              <img id="av-img" /><span id="av-letter">?</span>
+            </div>
+            <div class="avatar-edit" onclick="document.getElementById('avatar-file').click()">✏️</div>
+            <div class="online-dot"></div>
+            <div id="av-flag" style="position:absolute;bottom:-4px;right:-4px;font-size:18px;line-height:1;display:none;"></div>
+            <input type="file" id="avatar-file" accept="image/*" onchange="handleAvatar(event)" />
           </div>
-          <div class="avatar-edit" onclick="document.getElementById('avatar-file').click()">✏️</div>
-          <div class="online-dot"></div>
-          <div id="av-flag" style="position:absolute;bottom:-4px;right:-4px;font-size:18px;line-height:1;display:none;"></div>
-          <input type="file" id="avatar-file" accept="image/*" onchange="handleAvatar(event)" />
+          <div id="profile-country-flag" style="font-size:58px;line-height:1;opacity:.9;display:none;margin-top:-4px;"></div>
         </div>
         <div class="pname" id="pname">Loading...</div>
         <div class="phandle" id="phandle">@...</div>
@@ -939,10 +961,16 @@ function populateProfileUI(){
   document.getElementById('pbio').value=u.bio||'';
   const locFlag = u.country ? (FLAGS[normalizeCountry(u.country)] || FLAGS[u.country] || '') : '';
   document.getElementById('ploc').textContent = [locFlag, u.city, u.country].filter(Boolean).join(' ') || '—';
-  // Flag badge on avatar
+  // Small flag on avatar
   const avFlag=document.getElementById('av-flag');
   if(locFlag){avFlag.textContent=locFlag;avFlag.style.display='block';}
   else{avFlag.style.display='none';}
+  // Big flag top-right of profile card
+  const bigFlag=document.getElementById('profile-country-flag');
+  if(bigFlag){
+    if(locFlag){bigFlag.textContent=locFlag;bigFlag.style.display='block';}
+    else{bigFlag.style.display='none';}
+  }
   document.getElementById('pschool').textContent=u.school||'—';
   const indEl=document.getElementById('pindustry');
   const indLabel = [u.industry, u.subIndustry].filter(Boolean).join(' · ');
@@ -2274,20 +2302,37 @@ async function loadPersonOfDay(shuffle=false){
     person=connections[dayIdx];
   }
 
-  // Fill avatar
-  const avEl=document.getElementById('potd-avatar');
-  avEl.innerHTML=(person.name||'?').charAt(0).toUpperCase();
-  avEl.style.background='linear-gradient(135deg,#6366F1,#00C9A7)';
-
-  document.getElementById('potd-name').textContent=person.name||'Someone';
   const seg=getSeg(person.segment);
   const flag=FLAGS[normalizeCountry(person.country)]||FLAGS[person.country]||'🌍';
-  document.getElementById('potd-meta').textContent=[person.city,person.country].filter(Boolean).join(', ')||'Unknown location';
+  const metaStr=[person.city,person.country].filter(Boolean).join(', ')||'Unknown location';
+  const tagStr=seg?`${seg.emoji} ${seg.label}`:'';
+
+  // Fill Profile tab card
+  const avEl=document.getElementById('potd-avatar');
+  if(person.photoURL){avEl.innerHTML=`<img src="${person.photoURL}" style="width:100%;height:100%;object-fit:cover;">`;}
+  else{avEl.innerHTML=(person.name||'?').charAt(0).toUpperCase();avEl.style.background='linear-gradient(135deg,#6366F1,#00C9A7)';}
+  document.getElementById('potd-name').textContent=person.name||'Someone';
+  document.getElementById('potd-meta').textContent=metaStr;
   document.getElementById('potd-flag').textContent=flag;
-  document.getElementById('potd-tag').textContent=seg?`${seg.emoji} ${seg.label}`:'';
+  document.getElementById('potd-tag').textContent=tagStr;
   document.getElementById('potd-msg').textContent='';
 
+  // Fill People tab spotlight
+  const peopleSpotlight=document.getElementById('potd-people');
+  if(peopleSpotlight){
+    peopleSpotlight.style.display='block';
+    const pAv=document.getElementById('potd-p-avatar');
+    if(person.photoURL){pAv.innerHTML=`<img src="${person.photoURL}" style="width:100%;height:100%;object-fit:cover;">`;}
+    else{pAv.innerHTML=(person.name||'?').charAt(0).toUpperCase();}
+    document.getElementById('potd-p-name').textContent=person.name||'Someone';
+    document.getElementById('potd-p-meta').textContent=metaStr;
+    document.getElementById('potd-p-flag').textContent=flag;
+    document.getElementById('potd-p-tag').textContent=tagStr;
+    document.getElementById('potd-p-msg').textContent='';
+  }
+
   // Call Claude for a fun message
+  const fallbackMsg=`${person.name} is your person of the day — reach out and say hey! 👋`;
   try{
     const prompt=`You're GlobeConnect AI. Generate a short, fun, warm 1-2 sentence reminder about reconnecting with someone named ${person.name}${person.city?', from '+person.city:''}${person.country?', '+person.country:''}${person.note?' (how they met: '+person.note+')':''}${person.industry?', works in '+person.industry:''}. Make it feel personal and motivating. Don't use quotes. Keep it under 30 words.`;
     const resp=await fetch('https://corsproxy.io/?https://api.anthropic.com/v1/messages',{
@@ -2296,10 +2341,12 @@ async function loadPersonOfDay(shuffle=false){
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:120,messages:[{role:'user',content:prompt}]})
     });
     const data=await resp.json();
-    const msg=data?.content?.[0]?.text||'';
-    document.getElementById('potd-msg').textContent=msg||`${person.name} is your person of the day — reach out and say hey! 👋`;
+    const msg=data?.content?.[0]?.text||fallbackMsg;
+    document.getElementById('potd-msg').textContent=msg;
+    if(document.getElementById('potd-p-msg'))document.getElementById('potd-p-msg').textContent=msg;
   }catch(e){
-    document.getElementById('potd-msg').textContent=`${person.name} is your person of the day — it's been a while. Say hey! 👋`;
+    document.getElementById('potd-msg').textContent=fallbackMsg;
+    if(document.getElementById('potd-p-msg'))document.getElementById('potd-p-msg').textContent=fallbackMsg;
   }
   loading.style.display='none';
 }
