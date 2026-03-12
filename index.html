@@ -897,41 +897,55 @@ window.loadUserData=async function(user){
   const connSnap=await getDocs(collection(db,'users',user.uid,'connections'));
   connections=connSnap.docs.map(d=>({...d.data(),firestoreId:d.id}));
 
-  // Sync any connections that have a GlobeConnect account — pull latest name/city/country/photo/industry from handles
-  const handlesToSync=connections.filter(c=>c.linkedUid||c.instagram);
-  if(handlesToSync.length>0){
-    await Promise.all(handlesToSync.map(async c=>{
-      try{
-        // Prefer handle lookup; skip if no handle stored
-        const handle=(c.instagram||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
-        if(!handle)return;
+  // Sync connections that have a GlobeConnect account
+  await Promise.all(connections.map(async c=>{
+    try{
+      // Build candidate handles to try: stored instagram handle, or name-derived handle
+      const candidates=new Set();
+      if(c.instagram) candidates.add(c.instagram.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,''));
+      if(c.linkedUid) candidates.add(c.linkedUid); // uid-based lookup below
+      // Also try name-derived handle (e.g. "Krish Patel" → "krishpatel")
+      if(c.name) candidates.add(c.name.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,''));
+
+      let h=null;
+      for(const handle of candidates){
+        if(!handle||handle.length<2)continue;
         const hSnap=await getDoc(doc(db,'handles',handle));
-        if(!hSnap.exists())return;
-        const h=hSnap.data();
-        if(!h.uid)return; // not a GC user
-        // Only sync if this is actually the same person (uid matches if we have it)
-        if(c.linkedUid&&c.linkedUid!==h.uid)return;
-        const changed=
-          (h.displayName&&h.displayName!==c.name)||
-          (h.city&&h.city!==c.city)||
-          (h.country&&normalizeCountry(h.country)!==normalizeCountry(c.country))||
-          (h.industry&&h.industry!==c.industry)||
-          (h.photoURL!==undefined&&h.photoURL!==c.photoURL);
-        if(changed){
-          const updates={};
-          if(h.displayName)updates.name=h.displayName;
-          if(h.city)updates.city=h.city;
-          if(h.country)updates.country=normalizeCountry(h.country);
-          if(h.industry)updates.industry=h.industry;
-          if(h.subIndustry)updates.subIndustry=h.subIndustry;
-          if(h.bio)updates.bio=h.bio;
-          updates.photoURL=h.photoURL||'';
-          Object.assign(c,updates);
-          if(c.firestoreId) updateDoc(doc(db,'users',user.uid,'connections',c.firestoreId),updates).catch(()=>{});
+        if(hSnap.exists()&&hSnap.data().uid){
+          // If we have linkedUid, verify it matches
+          if(c.linkedUid&&c.linkedUid!==hSnap.data().uid)continue;
+          h=hSnap.data();
+          // Save linkedUid and handle for future syncs
+          if(!c.linkedUid||!c.instagram){
+            const fix={linkedUid:h.uid,instagram:h.handle||handle};
+            Object.assign(c,fix);
+            if(c.firestoreId) updateDoc(doc(db,'users',user.uid,'connections',c.firestoreId),fix).catch(()=>{});
+          }
+          break;
         }
-      }catch(e){}
-    }));
-  }
+      }
+      if(!h)return;
+
+      const changed=
+        (h.displayName&&h.displayName!==c.name)||
+        (h.city&&h.city!==c.city)||
+        (h.country&&normalizeCountry(h.country)!==normalizeCountry(c.country))||
+        (h.industry&&h.industry!==c.industry)||
+        (h.photoURL!==undefined&&h.photoURL!==c.photoURL);
+      if(changed){
+        const updates={};
+        if(h.displayName)updates.name=h.displayName;
+        if(h.city)updates.city=h.city;
+        if(h.country)updates.country=normalizeCountry(h.country);
+        if(h.industry)updates.industry=h.industry;
+        if(h.subIndustry)updates.subIndustry=h.subIndustry;
+        if(h.bio)updates.bio=h.bio;
+        updates.photoURL=h.photoURL||'';
+        Object.assign(c,updates);
+        if(c.firestoreId) updateDoc(doc(db,'users',user.uid,'connections',c.firestoreId),updates).catch(()=>{});
+      }
+    }catch(e){}
+  }));
 
   const initials=(userProfile.displayName||user.email||'?').charAt(0).toUpperCase();
   document.getElementById('hdr-av').textContent=initials;
