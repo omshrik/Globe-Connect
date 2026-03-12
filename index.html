@@ -10,7 +10,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyCuHqK98ulEZ48cinEbnOWu74A2s0BfJnM",
@@ -23,7 +23,7 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
-window._fb = { auth, db, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut, updateProfile, sendPasswordResetEmail, googleProvider };
+window._fb = { auth, db, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, where, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut, updateProfile, sendPasswordResetEmail, googleProvider };
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -360,6 +360,7 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
   </div>
   <div class="header-actions">
     <button class="btn btn-ghost" onclick="openModal('seg-modal')">🏷️ Segments</button>
+    <button class="btn btn-ghost" onclick="openModal('search-modal')" title="Find by username">🔍</button>
     <button class="btn btn-primary" onclick="openModal('add-modal')">+ Add</button>
     <div class="hdr-user" onclick="openModal('user-menu')">
       <div class="hdr-av" id="hdr-av">?</div>
@@ -532,6 +533,21 @@ nav{display:flex;border-top:1px solid var(--border);background:rgba(7,9,15,.97);
 </div>
 
 <!-- ADD PERSON MODAL -->
+<!-- SEARCH BY USERNAME MODAL -->
+<div class="overlay" id="search-modal" onclick="if(event.target===this)closeModal('search-modal')">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">🔍 Find by Username</div><button class="modal-close" onclick="closeModal('search-modal')">✕</button></div>
+    <div class="form-field">
+      <label>Enter @username</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="search-handle-input" placeholder="e.g. omshrikam" oninput="this.value=this.value.replace('@','')" onkeydown="if(event.key==='Enter')searchByHandle()" style="flex:1;" />
+        <button class="btn btn-primary" onclick="searchByHandle()" id="search-handle-btn">Search</button>
+      </div>
+    </div>
+    <div id="search-handle-result" style="margin-top:8px;"></div>
+  </div>
+</div>
+
 <div class="overlay" id="add-modal" onclick="if(event.target===this)closeModal('add-modal')">
   <div class="modal">
     <div class="modal-hdr"><div class="modal-title">📍 Add a Connection</div><button class="modal-close" onclick="closeModal('add-modal')">✕</button></div>
@@ -728,6 +744,7 @@ async function doSignup(){
     await window._fb.updateProfile(cred.user,{displayName:name});
     const handle=name.toLowerCase().replace(/\s+/g,'');
     await window._fb.setDoc(window._fb.doc(window._fb.db,'users',cred.user.uid),{displayName:name,email,handle,bio:'',location:'',school:'',createdAt:new Date().toISOString()});
+    if(handle) await window._fb.setDoc(window._fb.doc(window._fb.db,'handles',handle.toLowerCase()),{uid:cred.user.uid,displayName:name,handle,email});
   }catch(e){showAuthErr(authErrMsg(e.code));btn.innerHTML='Create Account 🌍';btn.disabled=false;}
 }
 async function doGoogle(){
@@ -776,6 +793,9 @@ window.loadUserData=async function(user){
   const {db,doc,getDoc,getDocs,collection,setDoc}=window._fb;
   const profSnap=await getDoc(doc(db,'users',user.uid));
   userProfile=profSnap.exists()?profSnap.data():{displayName:user.displayName||'',email:user.email,handle:(user.displayName||'user').toLowerCase().replace(/\s+/g,''),bio:'',location:'',school:''};
+  // Auto-register handle so others can find this user
+  const h=(userProfile.handle||'').toLowerCase();
+  if(h) setDoc(doc(db,'handles',h),{uid:user.uid,displayName:userProfile.displayName||'',handle:h,city:userProfile.city||'',country:userProfile.country||'',industry:userProfile.industry||'',subIndustry:userProfile.subIndustry||'',bio:userProfile.bio||'',photoURL:userProfile.photoURL||''},{merge:true});
 
   const segSnap=await getDocs(collection(db,'users',user.uid,'segments'));
   if(segSnap.empty){
@@ -1352,7 +1372,69 @@ function openEditModal(){
   if(userProfile.subIndustry) document.getElementById('ep-subindustry').value=userProfile.subIndustry||'';
   document.getElementById('edit-modal').classList.add('open');
 }
-async function saveProfile(){
+async function searchByHandle(){
+  const input=document.getElementById('search-handle-input');
+  const handle=input.value.trim().toLowerCase().replace('@','');
+  const resultEl=document.getElementById('search-handle-result');
+  const btn=document.getElementById('search-handle-btn');
+  if(!handle){resultEl.innerHTML='<p style="color:#F5C842;font-size:13px;">Enter a username first.</p>';return;}
+  btn.textContent='...';btn.disabled=true;
+  resultEl.innerHTML='<p style="color:#64748B;font-size:13px;">Searching...</p>';
+  try{
+    const {db,doc,getDoc}=window._fb;
+    const snap=await getDoc(doc(db,'handles',handle));
+    if(!snap.exists()){
+      resultEl.innerHTML='<p style="color:#F87171;font-size:13px;">❌ No user found with that username.</p>';
+    } else {
+      const u=snap.data();
+      // Don't add yourself
+      if(u.uid===window.currentUser?.uid){
+        resultEl.innerHTML='<p style="color:#F5C842;font-size:13px;">That\'s you! 😄</p>';
+        btn.textContent='Search';btn.disabled=false;return;
+      }
+      const flag=FLAGS[u.country]||'';
+      resultEl.innerHTML=`
+        <div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366F1,#00C9A7);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;font-family:'Syne',sans-serif;overflow:hidden;flex-shrink:0;">
+              ${u.photoURL?`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`:(u.displayName||'?').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#E2E8F0;">${u.displayName||'Unknown'}</div>
+              <div style="font-size:12px;color:#64748B;">@${u.handle} ${flag} ${[u.city,u.country].filter(Boolean).join(', ')}</div>
+              ${u.industry?`<div style="font-size:12px;color:#00C9A7;margin-top:2px;">💼 ${[u.industry,u.subIndustry].filter(Boolean).join(' · ')}</div>`:''}
+            </div>
+          </div>
+          ${u.bio?`<div style="font-size:13px;color:#94A3B8;font-style:italic;">"${u.bio}"</div>`:''}
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;" onclick="addFromSearch(${JSON.stringify(u).replace(/"/g,'&quot;')})">📍 Add to My Network</button>
+        </div>`;
+    }
+  }catch(err){
+    resultEl.innerHTML='<p style="color:#F87171;font-size:13px;">❌ Error searching. Try again.</p>';
+    console.error(err);
+  }
+  btn.textContent='Search';btn.disabled=false;
+}
+
+async function addFromSearch(u){
+  closeModal('search-modal');
+  // Pre-fill add modal with their info
+  document.getElementById('ap-name').value=u.displayName||'';
+  document.getElementById('ap-city').value=u.city||'';
+  document.getElementById('ap-country').value=u.country||'';
+  document.getElementById('ap-state').value='';
+  document.getElementById('ap-note').value='';
+  if(u.industry){
+    document.getElementById('ap-industry').value=u.industry||'';
+    updateAddSubIndustry();
+    setTimeout(()=>{if(u.subIndustry)document.getElementById('ap-subindustry').value=u.subIndustry||'';},50);
+  }
+  refreshAddPills();
+  openModal('add-modal');
+  showToast(`👤 Adding @${u.handle} — pick a segment & save!`);
+}
+
+
   const name=document.getElementById('ep-name').value.trim();
   const handle=document.getElementById('ep-handle').value.trim().replace('@','');
   const bio=document.getElementById('ep-bio').value.trim();
@@ -1367,8 +1449,21 @@ async function saveProfile(){
   const email=document.getElementById('ep-email').value.trim();
   const phone=document.getElementById('ep-phone').value.trim();
   const instagram=document.getElementById('ep-instagram').value.trim().replace('@','');
-  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:handle||userProfile.handle,bio,location,school,industry,subIndustry,birthday,age,email,phone,instagram};
+  userProfile={...userProfile,displayName:name||userProfile.displayName,handle:handle||userProfile.handle,bio,location,city,country,school,industry,subIndustry,birthday,age,email,phone,instagram};
   await window._fb.setDoc(window._fb.doc(window._fb.db,'users',window.currentUser.uid),userProfile,{merge:true});
+  // Register handle in global handles collection so others can find you
+  const h=(handle||userProfile.handle||'').toLowerCase();
+  if(h) await window._fb.setDoc(window._fb.doc(window._fb.db,'handles',h),{
+    uid:window.currentUser.uid,
+    displayName:userProfile.displayName||name||'',
+    handle:h,
+    city:userProfile.city||city||'',
+    country:userProfile.country||country||'',
+    industry:userProfile.industry||industry||'',
+    subIndustry:userProfile.subIndustry||subIndustry||'',
+    bio:userProfile.bio||bio||'',
+    photoURL:userProfile.photoURL||''
+  });
   populateProfileUI();
   const initials=(userProfile.displayName||'?').charAt(0).toUpperCase();
   document.getElementById('hdr-av').textContent=initials;
